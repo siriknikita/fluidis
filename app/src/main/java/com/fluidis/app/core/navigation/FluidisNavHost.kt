@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.fluidis.app.feature.home.HomeScreen
 
 @Composable
 fun FluidisNavHost(
@@ -20,7 +21,7 @@ fun FluidisNavHost(
         modifier = modifier,
     ) {
         composable<HomeRoute> {
-            Text("Home Screen")
+            HomeScreen(snackbarHostState = snackbarHostState)
         }
         composable<StatisticsRoute> {
             Text("Statistics Screen")
