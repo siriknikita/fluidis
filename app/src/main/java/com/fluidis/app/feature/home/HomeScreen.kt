@@ -47,7 +47,6 @@ fun HomeScreen(
                     viewModel.addEntry(drinkType, state.servingSizes[drinkType] ?: drinkType.defaultServingMl)
                 },
                 onUndo = { drinkType -> viewModel.undoLastEntry(drinkType) },
-                onLongPressUndo = { drinkType -> viewModel.clearAllEntries(drinkType) },
                 onLongPressAdd = { drinkType -> customAmountDrinkType = drinkType },
                 modifier = modifier,
             )
@@ -71,7 +70,6 @@ private fun HomeContent(
     state: HomeUiState.Success,
     onAdd: (DrinkType) -> Unit,
     onUndo: (DrinkType) -> Unit,
-    onLongPressUndo: (DrinkType) -> Unit,
     onLongPressAdd: (DrinkType) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -100,7 +98,6 @@ private fun HomeContent(
                 maxServings = state.maxServings[drinkType] ?: 0,
                 onAdd = { if (!state.isAtLimit(drinkType)) onAdd(drinkType) },
                 onUndo = { onUndo(drinkType) },
-                onLongPressUndo = { onLongPressUndo(drinkType) },
                 onLongPressAdd = { if (!state.isAtLimit(drinkType)) onLongPressAdd(drinkType) },
             )
         }
