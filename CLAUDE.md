@@ -20,20 +20,16 @@ Fluidis is a personal hydration tracking Android app. It tracks water, tea, and 
 ## Build Commands
 
 ```bash
-./scripts/build.sh        # Debug build (assembleDebug)
-./scripts/test.sh         # Unit tests
-./scripts/test-android.sh # Instrumented tests (needs emulator)
-./scripts/install.sh      # Build + install on device/emulator
-./scripts/lint.sh         # Lint check
-./scripts/clean.sh        # Clean build
+just build        # Debug build (APK copied to clipboard)
+just test         # Unit tests
+just test-android # Instrumented tests (needs emulator)
+just install      # Build + install on device/emulator
+just lint         # Lint check
+just clean        # Clean build
+just check        # Build + test + lint
 ```
 
-Or directly via Gradle:
-```bash
-./gradlew assembleDebug
-./gradlew testDebugUnitTest
-./gradlew lintDebug
-```
+Shell scripts are also available in `scripts/` as an alternative.
 
 ## Project Structure
 
