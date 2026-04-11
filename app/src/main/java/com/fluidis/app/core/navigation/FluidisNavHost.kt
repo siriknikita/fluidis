@@ -8,6 +8,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.fluidis.app.feature.home.HomeScreen
+import com.fluidis.app.feature.statistics.StatisticsScreen
 
 @Composable
 fun FluidisNavHost(
@@ -24,7 +25,7 @@ fun FluidisNavHost(
             HomeScreen(snackbarHostState = snackbarHostState)
         }
         composable<StatisticsRoute> {
-            Text("Statistics Screen")
+            StatisticsScreen()
         }
         composable<HistoryRoute> {
             Text("History Screen")
