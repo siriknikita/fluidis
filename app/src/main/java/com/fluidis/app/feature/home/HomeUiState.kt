@@ -10,9 +10,17 @@ sealed interface HomeUiState {
         val totalMl: Int,
         val goalMl: Int,
         val drinkTotals: Map<DrinkType, Int>,
+        val drinkServingCounts: Map<DrinkType, Int>,
+        val maxServings: Map<DrinkType, Int>,
         val recentEntries: List<DrinkEntry>,
         val servingSizes: Map<DrinkType, Int>,
     ) : HomeUiState {
+
+        fun isAtLimit(drinkType: DrinkType): Boolean {
+            val max = maxServings[drinkType] ?: 0
+            if (max <= 0) return false
+            return (drinkServingCounts[drinkType] ?: 0) >= max
+        }
         val progressFraction: Float
             get() = if (goalMl > 0) (totalMl.toFloat() / goalMl).coerceAtLeast(0f) else 0f
 

@@ -33,6 +33,8 @@ fun DrinkCard(
     drinkType: DrinkType,
     totalMl: Int,
     servingMl: Int,
+    servingCount: Int,
+    maxServings: Int,
     onAdd: () -> Unit,
     onUndo: () -> Unit,
     onLongPressAdd: () -> Unit,
@@ -77,10 +79,15 @@ fun DrinkCard(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                val limitText = if (maxServings > 0) " · $servingCount/$maxServings" else ""
                 Text(
-                    text = "${servingMl}ml/serving",
+                    text = "${servingMl}ml/serving$limitText",
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (maxServings > 0 && servingCount >= maxServings) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                 )
 
                 Spacer(modifier = Modifier.weight(1f))
@@ -108,13 +115,21 @@ fun DrinkCard(
 
                 Spacer(modifier = Modifier.width(16.dp))
 
+                val atLimit = maxServings > 0 && servingCount >= maxServings
                 FilledIconButton(
                     onClick = onAdd,
+                    enabled = !atLimit,
                     modifier = Modifier
                         .size(36.dp)
-                        .combinedClickable(
-                            onClick = onAdd,
-                            onLongClick = onLongPressAdd,
+                        .then(
+                            if (!atLimit) {
+                                Modifier.combinedClickable(
+                                    onClick = onAdd,
+                                    onLongClick = onLongPressAdd,
+                                )
+                            } else {
+                                Modifier
+                            }
                         ),
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = drinkType.color,

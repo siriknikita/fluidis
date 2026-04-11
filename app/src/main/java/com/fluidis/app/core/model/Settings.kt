@@ -7,6 +7,9 @@ data class Settings(
     val waterServingMl: Int = 500,
     val teaServingMl: Int = 350,
     val coffeeServingMl: Int = 350,
+    val waterMaxServings: Int = 0,
+    val teaMaxServings: Int = 0,
+    val coffeeMaxServings: Int = 0,
     val analyticsStartDate: LocalDate? = null,
     val selectedChartMode: ChartMode = ChartMode.BAR,
 ) {
@@ -14,6 +17,13 @@ data class Settings(
         DrinkType.WATER -> waterServingMl
         DrinkType.TEA -> teaServingMl
         DrinkType.COFFEE -> coffeeServingMl
+    }
+
+    /** 0 means unlimited */
+    fun maxServingsFor(drinkType: DrinkType): Int = when (drinkType) {
+        DrinkType.WATER -> waterMaxServings
+        DrinkType.TEA -> teaMaxServings
+        DrinkType.COFFEE -> coffeeMaxServings
     }
 }
 

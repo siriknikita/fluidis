@@ -28,6 +28,7 @@ class SettingsViewModel @Inject constructor(
         SettingsUiState.Success(
             goalMl = settings.dailyGoalMl,
             servingSizes = DrinkType.entries.associateWith { settings.servingMlFor(it) },
+            maxServings = DrinkType.entries.associateWith { settings.maxServingsFor(it) },
             analyticsStartDate = settings.analyticsStartDate,
             detectedStartDate = detectedDate,
         )
@@ -44,6 +45,12 @@ class SettingsViewModel @Inject constructor(
         if (sizeMl <= 0) return
         viewModelScope.launch {
             settingsDataStore.updateServingSize(drinkType, sizeMl)
+        }
+    }
+
+    fun updateMaxServings(drinkType: DrinkType, maxServings: Int) {
+        viewModelScope.launch {
+            settingsDataStore.updateMaxServings(drinkType, maxServings.coerceAtLeast(0))
         }
     }
 

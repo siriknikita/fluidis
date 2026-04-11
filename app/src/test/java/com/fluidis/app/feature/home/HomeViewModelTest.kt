@@ -145,6 +145,8 @@ class HomeViewModelTest {
             totalMl = 2500,
             goalMl = 2000,
             drinkTotals = emptyMap(),
+            drinkServingCounts = emptyMap(),
+            maxServings = emptyMap(),
             recentEntries = emptyList(),
             servingSizes = emptyMap(),
         )

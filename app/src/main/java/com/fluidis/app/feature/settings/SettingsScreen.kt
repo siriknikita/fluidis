@@ -36,6 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fluidis.app.BuildConfig
 import com.fluidis.app.core.model.DrinkType
 import com.fluidis.app.feature.settings.components.GoalSettingDialog
+import com.fluidis.app.feature.settings.components.MaxServingsDialog
 import com.fluidis.app.feature.settings.components.ServingSizeDialog
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
@@ -54,6 +55,7 @@ fun SettingsScreen(
 
     var showGoalDialog by remember { mutableStateOf(false) }
     var editingServingDrinkType by remember { mutableStateOf<DrinkType?>(null) }
+    var editingMaxServingsDrinkType by remember { mutableStateOf<DrinkType?>(null) }
     var showDatePicker by remember { mutableStateOf(false) }
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -108,6 +110,27 @@ fun SettingsScreen(
 
                     HorizontalDivider()
 
+                    // Daily Limits
+                    SectionHeader("Daily Limits")
+                    DrinkType.entries.forEach { drinkType ->
+                        val currentMax = state.maxServings[drinkType] ?: 0
+                        val limitText = if (currentMax > 0) "$currentMax servings/day" else "Unlimited"
+                        ListItem(
+                            headlineContent = { Text(drinkType.displayName) },
+                            supportingContent = { Text(limitText) },
+                            leadingContent = {
+                                Icon(
+                                    imageVector = drinkType.icon,
+                                    contentDescription = null,
+                                    tint = drinkType.color,
+                                )
+                            },
+                            modifier = Modifier.clickable { editingMaxServingsDrinkType = drinkType },
+                        )
+                    }
+
+                    HorizontalDivider()
+
                     // Analytics
                     SectionHeader("Analytics")
                     val startDateText = state.analyticsStartDate?.toString()
@@ -138,6 +161,18 @@ fun SettingsScreen(
                             showGoalDialog = false
                         },
                         onDismiss = { showGoalDialog = false },
+                    )
+                }
+
+                editingMaxServingsDrinkType?.let { drinkType ->
+                    MaxServingsDialog(
+                        drinkType = drinkType,
+                        currentMax = state.maxServings[drinkType] ?: 0,
+                        onConfirm = { max ->
+                            viewModel.updateMaxServings(drinkType, max)
+                            editingMaxServingsDrinkType = null
+                        },
+                        onDismiss = { editingMaxServingsDrinkType = null },
                     )
                 }
 

@@ -39,10 +39,15 @@ class HomeViewModel @Inject constructor(
         val totalsMap = DrinkType.entries.associateWith { type ->
             drinkTotals.find { it.drinkType == type.key }?.total ?: 0
         }
+        val servingCounts = DrinkType.entries.associateWith { type ->
+            entries.count { it.drinkType == type.key }
+        }
         HomeUiState.Success(
             totalMl = entries.sumOf { it.amountMl },
             goalMl = settings.dailyGoalMl,
             drinkTotals = totalsMap,
+            drinkServingCounts = servingCounts,
+            maxServings = DrinkType.entries.associateWith { settings.maxServingsFor(it) },
             recentEntries = entries.take(5),
             servingSizes = DrinkType.entries.associateWith { settings.servingMlFor(it) },
         )

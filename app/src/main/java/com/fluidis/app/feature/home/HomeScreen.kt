@@ -119,9 +119,11 @@ private fun HomeContent(
                 drinkType = drinkType,
                 totalMl = state.drinkTotals[drinkType] ?: 0,
                 servingMl = state.servingSizes[drinkType] ?: drinkType.defaultServingMl,
-                onAdd = { onAdd(drinkType) },
+                servingCount = state.drinkServingCounts[drinkType] ?: 0,
+                maxServings = state.maxServings[drinkType] ?: 0,
+                onAdd = { if (!state.isAtLimit(drinkType)) onAdd(drinkType) },
                 onUndo = { onUndo(drinkType) },
-                onLongPressAdd = { onLongPressAdd(drinkType) },
+                onLongPressAdd = { if (!state.isAtLimit(drinkType)) onLongPressAdd(drinkType) },
             )
         }
 

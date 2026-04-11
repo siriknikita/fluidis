@@ -28,6 +28,9 @@ class SettingsDataStore @Inject constructor(
         val WATER_SERVING_ML = intPreferencesKey("water_serving_ml")
         val TEA_SERVING_ML = intPreferencesKey("tea_serving_ml")
         val COFFEE_SERVING_ML = intPreferencesKey("coffee_serving_ml")
+        val WATER_MAX_SERVINGS = intPreferencesKey("water_max_servings")
+        val TEA_MAX_SERVINGS = intPreferencesKey("tea_max_servings")
+        val COFFEE_MAX_SERVINGS = intPreferencesKey("coffee_max_servings")
         val ANALYTICS_START_DATE = stringPreferencesKey("analytics_start_date")
         val SELECTED_CHART_MODE = stringPreferencesKey("selected_chart_mode")
     }
@@ -38,6 +41,9 @@ class SettingsDataStore @Inject constructor(
             waterServingMl = prefs[Keys.WATER_SERVING_ML] ?: 500,
             teaServingMl = prefs[Keys.TEA_SERVING_ML] ?: 350,
             coffeeServingMl = prefs[Keys.COFFEE_SERVING_ML] ?: 350,
+            waterMaxServings = prefs[Keys.WATER_MAX_SERVINGS] ?: 0,
+            teaMaxServings = prefs[Keys.TEA_MAX_SERVINGS] ?: 0,
+            coffeeMaxServings = prefs[Keys.COFFEE_MAX_SERVINGS] ?: 0,
             analyticsStartDate = prefs[Keys.ANALYTICS_START_DATE]?.let {
                 LocalDate.parse(it)
             },
@@ -73,5 +79,15 @@ class SettingsDataStore @Inject constructor(
 
     suspend fun updateSelectedChartMode(mode: ChartMode) {
         context.dataStore.edit { it[Keys.SELECTED_CHART_MODE] = mode.key }
+    }
+
+    suspend fun updateMaxServings(drinkType: DrinkType, maxServings: Int) {
+        context.dataStore.edit { prefs ->
+            when (drinkType) {
+                DrinkType.WATER -> prefs[Keys.WATER_MAX_SERVINGS] = maxServings
+                DrinkType.TEA -> prefs[Keys.TEA_MAX_SERVINGS] = maxServings
+                DrinkType.COFFEE -> prefs[Keys.COFFEE_MAX_SERVINGS] = maxServings
+            }
+        }
     }
 }
