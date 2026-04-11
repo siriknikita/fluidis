@@ -19,7 +19,7 @@ android {
         versionCode = 1
         versionName = "1.0.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.fluidis.app.HiltTestRunner"
     }
 
     buildTypes {
@@ -111,5 +111,8 @@ dependencies {
     androidTestImplementation(libs.espresso)
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.compose.ui.test.junit4)
+    androidTestImplementation(libs.hilt.android.testing)
+    kspAndroidTest(libs.hilt.compiler)
+    androidTestImplementation(libs.navigation.testing)
     debugImplementation(libs.compose.ui.test.manifest)
 }

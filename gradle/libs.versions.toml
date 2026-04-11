@@ -61,6 +61,8 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+hilt-android-testing = { module = "com.google.dagger:hilt-android-testing", version.ref = "hilt" }
+navigation-testing = { module = "androidx.navigation:navigation-testing", version.ref = "navigationCompose" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
