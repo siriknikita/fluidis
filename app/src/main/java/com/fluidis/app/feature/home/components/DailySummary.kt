@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.fluidis.app.core.theme.GoalGold
+import com.fluidis.app.core.ui.AnimationConstants
 import com.fluidis.app.core.theme.GoalGreen
 
 @Composable
@@ -41,7 +42,7 @@ fun DailySummary(
 ) {
     val animatedProgress by animateFloatAsState(
         targetValue = progressFraction.coerceIn(0f, 1f),
-        animationSpec = tween(durationMillis = 600),
+        animationSpec = tween(durationMillis = AnimationConstants.PROGRESS_DURATION_MS),
         label = "water_fill",
     )
 

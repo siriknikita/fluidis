@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import com.fluidis.app.core.model.ChartMode
 import com.fluidis.app.core.model.DailyTotal
 import com.fluidis.app.core.model.DrinkType
+import com.fluidis.app.core.ui.ChartDefaults
 
 @Composable
 fun IntakeChart(
@@ -51,7 +52,7 @@ fun IntakeChart(
 
     val maxValue = remember(dailyTotals, goalMl) {
         (dailyTotals.maxOfOrNull { it.total } ?: goalMl).coerceAtLeast(goalMl).let {
-            ((it / 500) + 1) * 500
+            ((it / ChartDefaults.Y_AXIS_ROUND_INTERVAL) + 1) * ChartDefaults.Y_AXIS_ROUND_INTERVAL
         }
     }
 
@@ -85,10 +86,10 @@ fun IntakeChart(
                 Canvas(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp),
+                        .height(ChartDefaults.CHART_HEIGHT),
                 ) {
-                    val leftPadding = 40f
-                    val bottomPadding = 24f
+                    val leftPadding = ChartDefaults.LEFT_PADDING
+                    val bottomPadding = ChartDefaults.BOTTOM_PADDING
                     val chartWidth = size.width - leftPadding
                     val chartHeight = size.height - bottomPadding
 
@@ -135,8 +136,8 @@ private fun DrawScope.drawBarChart(
     barColor: Color,
     trackColor: Color,
 ) {
-    val barWidth = (chartWidth / dailyTotals.size) * 0.6f
-    val gap = (chartWidth / dailyTotals.size) * 0.4f
+    val barWidth = (chartWidth / dailyTotals.size) * ChartDefaults.BAR_WIDTH_FRACTION
+    val gap = (chartWidth / dailyTotals.size) * ChartDefaults.GAP_FRACTION
 
     dailyTotals.forEachIndexed { index, daily ->
         val x = leftPadding + index * (barWidth + gap) + gap / 2
@@ -147,7 +148,7 @@ private fun DrawScope.drawBarChart(
             color = barColor,
             topLeft = Offset(x, y),
             size = Size(barWidth, barHeight),
-            cornerRadius = CornerRadius(4f, 4f),
+            cornerRadius = CornerRadius(ChartDefaults.BAR_CORNER_RADIUS, ChartDefaults.BAR_CORNER_RADIUS),
         )
     }
 }
@@ -159,8 +160,8 @@ private fun DrawScope.drawStackedBarChart(
     chartHeight: Float,
     leftPadding: Float,
 ) {
-    val barWidth = (chartWidth / dailyTotals.size) * 0.6f
-    val gap = (chartWidth / dailyTotals.size) * 0.4f
+    val barWidth = (chartWidth / dailyTotals.size) * ChartDefaults.BAR_WIDTH_FRACTION
+    val gap = (chartWidth / dailyTotals.size) * ChartDefaults.GAP_FRACTION
     val colors = DrinkType.entries.map { it.color }
 
     dailyTotals.forEachIndexed { index, daily ->
@@ -184,7 +185,7 @@ private fun DrawScope.drawStackedBarChart(
                 color = color,
                 topLeft = Offset(x, currentY),
                 size = Size(barWidth, h),
-                cornerRadius = if (colorIndex == segmentCount - 1) CornerRadius(4f) else CornerRadius.Zero,
+                cornerRadius = if (colorIndex == segmentCount - 1) CornerRadius(ChartDefaults.BAR_CORNER_RADIUS) else CornerRadius.Zero,
             )
         }
     }
@@ -234,11 +235,11 @@ private fun DrawScope.drawLineChart(
     drawPath(
         path = linePath,
         color = lineColor,
-        style = Stroke(width = 3f, cap = StrokeCap.Round),
+        style = Stroke(width = ChartDefaults.LINE_STROKE_WIDTH, cap = StrokeCap.Round),
     )
 
     // Draw dots
     points.forEach { point ->
-        drawCircle(color = lineColor, radius = 4f, center = point)
+        drawCircle(color = lineColor, radius = ChartDefaults.DOT_RADIUS, center = point)
     }
 }

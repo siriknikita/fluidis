@@ -20,6 +20,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.todayIn
+import com.fluidis.app.core.ui.DatePeriods
 import javax.inject.Inject
 
 @HiltViewModel
@@ -73,9 +74,9 @@ class StatisticsViewModel @Inject constructor(
     private fun dateRangeFor(period: StatsPeriod, analyticsStartDate: LocalDate?): Pair<String, String> {
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
         val start = when (period) {
-            StatsPeriod.WEEK -> today.minus(6, DateTimeUnit.DAY)
-            StatsPeriod.MONTH -> today.minus(29, DateTimeUnit.DAY)
-            StatsPeriod.ALL_TIME -> analyticsStartDate ?: today.minus(365, DateTimeUnit.DAY)
+            StatsPeriod.WEEK -> today.minus(DatePeriods.WEEK_OFFSET_DAYS, DateTimeUnit.DAY)
+            StatsPeriod.MONTH -> today.minus(DatePeriods.MONTH_OFFSET_DAYS, DateTimeUnit.DAY)
+            StatsPeriod.ALL_TIME -> analyticsStartDate ?: today.minus(DatePeriods.DEFAULT_ALL_TIME_DAYS, DateTimeUnit.DAY)
         }
         return start.toString() to today.toString()
     }

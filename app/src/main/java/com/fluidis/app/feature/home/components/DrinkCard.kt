@@ -37,6 +37,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.fluidis.app.core.model.DrinkType
+import com.fluidis.app.core.ui.RepeatClickDefaults
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -125,9 +126,9 @@ fun DrinkCard(
                             if (minusEnabled) {
                                 Modifier.repeatingClickable(
                                     onClick = onUndo,
-                                    initialDelayMs = 400L,
-                                    maxDelayMs = 300L,
-                                    minDelayMs = 50L,
+                                    initialDelayMs = RepeatClickDefaults.INITIAL_DELAY_MS,
+                                    maxDelayMs = RepeatClickDefaults.MAX_DELAY_MS,
+                                    minDelayMs = RepeatClickDefaults.MIN_DELAY_MS,
                                 )
                             } else {
                                 Modifier
@@ -202,9 +203,9 @@ fun DrinkCard(
  */
 private fun Modifier.repeatingClickable(
     onClick: () -> Unit,
-    initialDelayMs: Long = 400L,
-    maxDelayMs: Long = 300L,
-    minDelayMs: Long = 50L,
+    initialDelayMs: Long = RepeatClickDefaults.INITIAL_DELAY_MS,
+    maxDelayMs: Long = RepeatClickDefaults.MAX_DELAY_MS,
+    minDelayMs: Long = RepeatClickDefaults.MIN_DELAY_MS,
 ): Modifier = this
     .clickable(onClick = onClick)
     .pointerInput(onClick) {
