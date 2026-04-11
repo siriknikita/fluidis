@@ -23,7 +23,7 @@ fun FluidisNavHost(
         modifier = modifier,
     ) {
         composable<HomeRoute> {
-            HomeScreen(snackbarHostState = snackbarHostState)
+            HomeScreen()
         }
         composable<StatisticsRoute> {
             StatisticsScreen()

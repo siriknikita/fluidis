@@ -7,11 +7,9 @@ import com.fluidis.app.core.datastore.SettingsDataStore
 import com.fluidis.app.core.model.DrinkEntry
 import com.fluidis.app.core.model.DrinkType
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -27,9 +25,6 @@ class HomeViewModel @Inject constructor(
 
     private val today: String
         get() = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
-
-    private val _events = Channel<HomeEvent>(Channel.BUFFERED)
-    val events = _events.receiveAsFlow()
 
     val uiState: StateFlow<HomeUiState> = combine(
         drinkEntryDao.getEntriesForDate(today),
@@ -72,14 +67,7 @@ class HomeViewModel @Inject constructor(
             val lastEntry = drinkEntryDao.getLastEntryForDrinkOnDate(today, drinkType.key)
             if (lastEntry != null) {
                 drinkEntryDao.delete(lastEntry)
-                _events.send(HomeEvent.EntryRemoved(lastEntry))
             }
-        }
-    }
-
-    fun restoreEntry(entry: DrinkEntry) {
-        viewModelScope.launch {
-            drinkEntryDao.insert(entry.copy(id = 0))
         }
     }
 }

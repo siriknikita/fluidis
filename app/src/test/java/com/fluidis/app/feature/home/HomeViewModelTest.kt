@@ -121,22 +121,16 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `undoLastEntry deletes and emits event`() = runTest {
+    fun `undoLastEntry deletes last entry`() = runTest {
         val entry = DrinkEntry(1, "water", 500, "2026-04-11", 1000L)
         coEvery { dao.getLastEntryForDrinkOnDate(any(), "water") } returns entry
         coEvery { dao.delete(entry) } returns Unit
 
         viewModel = createViewModel()
+        viewModel.undoLastEntry(DrinkType.WATER)
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        viewModel.events.test {
-            viewModel.undoLastEntry(DrinkType.WATER)
-            testDispatcher.scheduler.advanceUntilIdle()
-
-            val event = awaitItem()
-            assertTrue(event is HomeEvent.EntryRemoved)
-            assertEquals(entry, (event as HomeEvent.EntryRemoved).entry)
-            cancelAndIgnoreRemainingEvents()
-        }
+        coVerify { dao.delete(entry) }
     }
 
     @Test

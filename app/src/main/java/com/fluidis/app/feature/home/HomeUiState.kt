@@ -34,8 +34,3 @@ sealed interface HomeUiState {
             get() = (totalMl - goalMl).coerceAtLeast(0)
     }
 }
-
-sealed interface HomeEvent {
-    data class EntryRemoved(val entry: DrinkEntry) : HomeEvent
-    data class Error(val message: String) : HomeEvent
-}

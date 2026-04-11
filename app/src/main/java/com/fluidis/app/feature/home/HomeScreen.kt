@@ -10,11 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,33 +27,12 @@ import com.fluidis.app.feature.home.components.DrinkCard
 
 @Composable
 fun HomeScreen(
-    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     var customAmountDrinkType by remember { mutableStateOf<DrinkType?>(null) }
-
-    LaunchedEffect(Unit) {
-        viewModel.events.collect { event ->
-            when (event) {
-                is HomeEvent.EntryRemoved -> {
-                    val result = snackbarHostState.showSnackbar(
-                        message = "Removed ${event.entry.amountMl}ml ${DrinkType.fromKey(event.entry.drinkType).displayName}",
-                        actionLabel = "UNDO",
-                        duration = SnackbarDuration.Short,
-                    )
-                    if (result == SnackbarResult.ActionPerformed) {
-                        viewModel.restoreEntry(event.entry)
-                    }
-                }
-                is HomeEvent.Error -> {
-                    snackbarHostState.showSnackbar(event.message)
-                }
-            }
-        }
-    }
 
     when (val state = uiState) {
         is HomeUiState.Loading -> {
