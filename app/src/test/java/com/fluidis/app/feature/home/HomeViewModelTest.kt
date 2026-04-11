@@ -134,6 +134,17 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `clearAllEntries calls batch delete on dao`() = runTest {
+        coEvery { dao.deleteAllForDrinkOnDate(any(), any()) } returns Unit
+        viewModel = createViewModel()
+
+        viewModel.clearAllEntries(DrinkType.COFFEE)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify { dao.deleteAllForDrinkOnDate(any(), "coffee") }
+    }
+
+    @Test
     fun `goal reached computed correctly`() {
         val state = HomeUiState.Success(
             totalMl = 2500,

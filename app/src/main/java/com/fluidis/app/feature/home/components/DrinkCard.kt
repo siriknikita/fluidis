@@ -37,6 +37,7 @@ fun DrinkCard(
     maxServings: Int,
     onAdd: () -> Unit,
     onUndo: () -> Unit,
+    onLongPressUndo: () -> Unit,
     onLongPressAdd: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -95,7 +96,18 @@ fun DrinkCard(
                 OutlinedIconButton(
                     onClick = onUndo,
                     enabled = totalMl > 0,
-                    modifier = Modifier.size(36.dp),
+                    modifier = Modifier
+                        .size(36.dp)
+                        .then(
+                            if (totalMl > 0) {
+                                Modifier.combinedClickable(
+                                    onClick = onUndo,
+                                    onLongClick = onLongPressUndo,
+                                )
+                            } else {
+                                Modifier
+                            }
+                        ),
                 ) {
                     Icon(
                         Icons.Rounded.Remove,

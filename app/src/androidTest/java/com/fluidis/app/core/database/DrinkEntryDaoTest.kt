@@ -124,6 +124,19 @@ class DrinkEntryDaoTest {
     }
 
     @Test
+    fun deleteAllForDrinkOnDate() = runTest {
+        dao.insert(entry(drinkType = "water", amountMl = 500))
+        dao.insert(entry(drinkType = "water", amountMl = 250))
+        dao.insert(entry(drinkType = "tea", amountMl = 350))
+
+        dao.deleteAllForDrinkOnDate("2026-04-11", "water")
+
+        val entries = dao.getEntriesForDate("2026-04-11").first()
+        assertEquals(1, entries.size)
+        assertEquals("tea", entries[0].drinkType)
+    }
+
+    @Test
     fun getEarliestEntryDate() = runTest {
         dao.insert(entry(date = "2026-04-11"))
         dao.insert(entry(date = "2026-04-05"))

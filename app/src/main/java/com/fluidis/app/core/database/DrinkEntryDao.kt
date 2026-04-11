@@ -80,4 +80,7 @@ interface DrinkEntryDao {
         """
     )
     suspend fun getLastEntryForDrinkOnDate(date: String, drinkType: String): DrinkEntry?
+
+    @Query("DELETE FROM drink_entries WHERE date = :date AND drinkType = :drinkType")
+    suspend fun deleteAllForDrinkOnDate(date: String, drinkType: String)
 }

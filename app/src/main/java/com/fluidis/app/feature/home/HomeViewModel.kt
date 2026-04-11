@@ -70,4 +70,10 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
+
+    fun clearAllEntries(drinkType: DrinkType) {
+        viewModelScope.launch {
+            drinkEntryDao.deleteAllForDrinkOnDate(today, drinkType.key)
+        }
+    }
 }
