@@ -24,6 +24,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.fluidis.app.core.model.DrinkType
+import com.fluidis.app.core.ui.isValidAmountInput
 
 @Composable
 fun CustomAmountDialog(
@@ -60,7 +61,7 @@ fun CustomAmountDialog(
                 OutlinedTextField(
                     value = amountText,
                     onValueChange = { value ->
-                        if (value.all { it.isDigit() } && value.length <= 5) {
+                        if (value.isValidAmountInput()) {
                             amountText = value
                         }
                     },

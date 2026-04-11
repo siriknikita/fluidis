@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.fluidis.app.core.model.DrinkEntry
+import com.fluidis.app.core.ui.isValidAmountInput
 import com.fluidis.app.core.model.DrinkType
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -96,7 +97,7 @@ fun EditEntryDialog(
                 OutlinedTextField(
                     value = amountText,
                     onValueChange = { value ->
-                        if (value.all { it.isDigit() } && value.length <= 5) {
+                        if (value.isValidAmountInput()) {
                             amountText = value
                         }
                     },

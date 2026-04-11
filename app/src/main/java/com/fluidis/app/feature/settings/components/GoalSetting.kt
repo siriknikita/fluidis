@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import com.fluidis.app.core.ui.isValidAmountInput
 
 @Composable
 fun GoalSettingDialog(
@@ -30,7 +31,7 @@ fun GoalSettingDialog(
             OutlinedTextField(
                 value = goalText,
                 onValueChange = { value ->
-                    if (value.all { it.isDigit() } && value.length <= 5) {
+                    if (value.isValidAmountInput()) {
                         goalText = value
                     }
                 },

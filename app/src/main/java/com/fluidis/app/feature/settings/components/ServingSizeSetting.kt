@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.input.KeyboardType
 import com.fluidis.app.core.model.DrinkType
+import com.fluidis.app.core.ui.isValidAmountInput
 
 @Composable
 fun ServingSizeDialog(
@@ -39,7 +40,7 @@ fun ServingSizeDialog(
             OutlinedTextField(
                 value = sizeText,
                 onValueChange = { value ->
-                    if (value.all { it.isDigit() } && value.length <= 5) {
+                    if (value.isValidAmountInput()) {
                         sizeText = value
                     }
                 },

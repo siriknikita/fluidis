@@ -19,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.fluidis.app.core.model.DrinkType
+import com.fluidis.app.core.ui.isValidAmountInput
 
 @Composable
 fun MaxServingsDialog(
@@ -50,7 +51,7 @@ fun MaxServingsDialog(
                 OutlinedTextField(
                     value = maxText,
                     onValueChange = { value ->
-                        if (value.all { it.isDigit() } && value.length <= 3) {
+                        if (value.isValidAmountInput(maxLength = 3)) {
                             maxText = value
                         }
                     },
