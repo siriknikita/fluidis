@@ -11,7 +11,7 @@ Fluidis is a personal hydration tracking Android app. It tracks water, tea, and 
 - **Persistence**: Room (entries) + DataStore (preferences/settings)
 - **DI**: Hilt
 - **Navigation**: Type-safe Compose Navigation 2.9.0-alpha04 (`@Serializable` routes)
-- **Charts**: Vico (`compose-m3`)
+- **Charts**: Custom Canvas-based (no external chart library)
 - **Dates**: kotlinx-datetime
 - **Architecture**: MVVM with repository layer
 - **Build**: Gradle 8.13, AGP 8.9.1, Kotlin 2.1.20, Compose BOM 2025.03.01
