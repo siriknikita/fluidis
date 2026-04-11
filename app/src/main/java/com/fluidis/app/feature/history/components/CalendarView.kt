@@ -35,6 +35,7 @@ import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
+import java.time.YearMonth
 
 @Composable
 fun CalendarView(
@@ -52,12 +53,7 @@ fun CalendarView(
         LocalDate(currentMonth.year, currentMonth.month, 1)
     }
     val daysInMonth = remember(currentMonth) {
-        when (currentMonth.month) {
-            kotlinx.datetime.Month.FEBRUARY -> if (isLeapYear(currentMonth.year)) 29 else 28
-            kotlinx.datetime.Month.APRIL, kotlinx.datetime.Month.JUNE,
-            kotlinx.datetime.Month.SEPTEMBER, kotlinx.datetime.Month.NOVEMBER -> 30
-            else -> 31
-        }
+        YearMonth.of(currentMonth.year, currentMonth.month.value).lengthOfMonth()
     }
     val firstDayOfWeek = remember(firstDayOfMonth) {
         firstDayOfMonth.dayOfWeek
@@ -100,36 +96,59 @@ fun CalendarView(
         }
 
         // Calendar grid
-        val totalCells = startOffset + daysInMonth
-        val rows = (totalCells + 6) / 7
+        CalendarGrid(
+            currentMonth = currentMonth,
+            daysInMonth = daysInMonth,
+            startOffset = startOffset,
+            today = today,
+            selectedDate = selectedDate,
+            datesWithEntries = datesWithEntries,
+            goalMl = goalMl,
+            onDateSelected = onDateSelected,
+        )
+    }
+}
 
-        for (row in 0 until rows) {
-            Row(modifier = Modifier.fillMaxWidth()) {
-                for (col in 0 until 7) {
-                    val cellIndex = row * 7 + col
-                    val dayNumber = cellIndex - startOffset + 1
+@Composable
+private fun CalendarGrid(
+    currentMonth: MonthYear,
+    daysInMonth: Int,
+    startOffset: Int,
+    today: LocalDate,
+    selectedDate: LocalDate?,
+    datesWithEntries: Map<LocalDate, DailyTotal>,
+    goalMl: Int,
+    onDateSelected: (LocalDate) -> Unit,
+) {
+    val totalCells = startOffset + daysInMonth
+    val rows = (totalCells + 6) / 7
 
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .aspectRatio(1f),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        if (dayNumber in 1..daysInMonth) {
-                            val date = LocalDate(currentMonth.year, currentMonth.month, dayNumber)
-                            val dailyTotal = datesWithEntries[date]
-                            val isToday = date == today
-                            val isSelected = date == selectedDate
+    for (row in 0 until rows) {
+        Row(modifier = Modifier.fillMaxWidth()) {
+            for (col in 0 until 7) {
+                val cellIndex = row * 7 + col
+                val dayNumber = cellIndex - startOffset + 1
 
-                            CalendarDay(
-                                dayNumber = dayNumber,
-                                isToday = isToday,
-                                isSelected = isSelected,
-                                dailyTotal = dailyTotal,
-                                goalMl = goalMl,
-                                onClick = { onDateSelected(date) },
-                            )
-                        }
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .aspectRatio(1f),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (dayNumber in 1..daysInMonth) {
+                        val date = LocalDate(currentMonth.year, currentMonth.month, dayNumber)
+                        val dailyTotal = datesWithEntries[date]
+                        val isToday = date == today
+                        val isSelected = date == selectedDate
+
+                        CalendarDay(
+                            dayNumber = dayNumber,
+                            isToday = isToday,
+                            isSelected = isSelected,
+                            dailyTotal = dailyTotal,
+                            goalMl = goalMl,
+                            onClick = { onDateSelected(date) },
+                        )
                     }
                 }
             }
@@ -182,6 +201,3 @@ private fun CalendarDay(
         }
     }
 }
-
-private fun isLeapYear(year: Int): Boolean =
-    (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
