@@ -1,8 +1,11 @@
 package com.fluidis.app.feature.home.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,19 +13,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.fluidis.app.core.model.DrinkType
@@ -93,13 +99,21 @@ fun DrinkCard(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                OutlinedIconButton(
-                    onClick = onUndo,
-                    enabled = totalMl > 0,
+                // Minus button — tap removes last, long-press removes all
+                val minusEnabled = totalMl > 0
+                Box(
                     modifier = Modifier
                         .size(36.dp)
+                        .clip(CircleShape)
+                        .border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.outline.copy(
+                                alpha = if (minusEnabled) 1f else 0.38f,
+                            ),
+                            shape = CircleShape,
+                        )
                         .then(
-                            if (totalMl > 0) {
+                            if (minusEnabled) {
                                 Modifier.combinedClickable(
                                     onClick = onUndo,
                                     onLongClick = onLongPressUndo,
@@ -107,12 +121,16 @@ fun DrinkCard(
                             } else {
                                 Modifier
                             }
-                        ),
+                        )
+                        .alpha(if (minusEnabled) 1f else 0.38f)
+                        .semantics { role = Role.Button },
+                    contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         Icons.Rounded.Remove,
                         contentDescription = "Undo last ${drinkType.displayName}",
                         modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.onSurface,
                     )
                 }
 
@@ -127,12 +145,17 @@ fun DrinkCard(
 
                 Spacer(modifier = Modifier.width(16.dp))
 
+                // Plus button — tap adds serving, long-press opens custom amount
                 val atLimit = maxServings > 0 && servingCount >= maxServings
-                FilledIconButton(
-                    onClick = onAdd,
-                    enabled = !atLimit,
+                Box(
                     modifier = Modifier
                         .size(36.dp)
+                        .clip(CircleShape)
+                        .background(
+                            color = drinkType.color.copy(
+                                alpha = if (atLimit) 0.38f else 1f,
+                            ),
+                        )
                         .then(
                             if (!atLimit) {
                                 Modifier.combinedClickable(
@@ -142,15 +165,15 @@ fun DrinkCard(
                             } else {
                                 Modifier
                             }
-                        ),
-                    colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = drinkType.color,
-                    ),
+                        )
+                        .semantics { role = Role.Button },
+                    contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         Icons.Rounded.Add,
                         contentDescription = "Add ${drinkType.displayName}",
                         modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.onPrimary,
                     )
                 }
             }
