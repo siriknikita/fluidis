@@ -39,5 +39,21 @@ clean *args:
 release *args:
     ./gradlew assembleRelease {{args}}
 
+# Connect to device over wireless ADB
+connect *args:
+    adeploy connect {{args}}
+
+# Pair with device for wireless debugging (one-time setup)
+pair addr code:
+    adeploy pair {{addr}} {{code}}
+
+# Build and install wirelessly (main dev command)
+deploy *args:
+    adeploy {{args}}
+
+# Disconnect wireless ADB
+disconnect:
+    adeploy disconnect
+
 # Run all checks (build + test + lint)
 check: build test lint
