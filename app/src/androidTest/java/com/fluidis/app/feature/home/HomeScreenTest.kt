@@ -26,10 +26,13 @@ class HomeScreenTest {
                 DailySummary(
                     totalMl = 1250,
                     goalMl = 2000,
+                    goalUpperMl = null,
                     progressFraction = 0.625f,
                     goalReached = false,
+                    overUpperBound = false,
                     remainingMl = 750,
                     overGoalMl = 0,
+                    overUpperMl = 0,
                 )
             }
         }
@@ -45,10 +48,13 @@ class HomeScreenTest {
                 DailySummary(
                     totalMl = 2500,
                     goalMl = 2000,
+                    goalUpperMl = null,
                     progressFraction = 1.25f,
                     goalReached = true,
+                    overUpperBound = false,
                     remainingMl = 0,
                     overGoalMl = 500,
+                    overUpperMl = 0,
                 )
             }
         }

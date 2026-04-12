@@ -30,6 +30,10 @@ val Brown90 = Color(0xFFD7CCC8)
 val GoalGreen = Color(0xFF4CAF50)
 val GoalGold = Color(0xFFFFB300)
 
+// Over upper bound
+val OverUpperAmber = Color(0xFFFF6F00)
+
 // Calendar dots
 val DotGoalMet = Color(0xFF4CAF50)
 val DotBelowGoal = Color(0xFFFF9800)
+val DotOverUpper = Color(0xFFFF6F00)

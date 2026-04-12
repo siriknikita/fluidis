@@ -45,8 +45,9 @@ class HistoryViewModel @Inject constructor(
         _selectedDate,
         settingsDataStore.settings,
     ) { month, selectedDate, settings ->
-        Triple(month, selectedDate, settings.dailyGoalMl)
-    }.flatMapLatest { (month, selectedDate, goalMl) ->
+        Triple(month, selectedDate, settings)
+    }.flatMapLatest { (month, selectedDate, settings) ->
+        val goalMl = settings.dailyGoalMl
         val firstDay = LocalDate(month.year, month.month, 1)
         val lastDay = firstDay.plus(1, DateTimeUnit.MONTH).minus(1, DateTimeUnit.DAY)
 
@@ -67,6 +68,7 @@ class HistoryViewModel @Inject constructor(
                 currentMonth = month,
                 datesWithEntries = datesMap,
                 goalMl = goalMl,
+                goalUpperMl = settings.dailyGoalUpperMl,
                 selectedDate = selectedDate,
                 selectedDateEntries = selectedEntries,
                 selectedDateTotal = selectedEntries.sumOf { it.amountMl },

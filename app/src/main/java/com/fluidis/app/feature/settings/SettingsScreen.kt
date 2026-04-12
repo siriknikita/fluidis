@@ -84,7 +84,14 @@ fun SettingsScreen(
                     SectionHeader("Hydration")
                     ListItem(
                         headlineContent = { Text("Daily goal") },
-                        supportingContent = { Text("${state.goalMl} ml") },
+                        supportingContent = {
+                            val goalText = if (state.goalUpperMl != null && state.goalUpperMl > state.goalMl) {
+                                "${state.goalMl} – ${state.goalUpperMl} ml"
+                            } else {
+                                "${state.goalMl} ml"
+                            }
+                            Text(goalText)
+                        },
                         modifier = Modifier.clickable { showGoalDialog = true },
                     )
 
@@ -156,8 +163,9 @@ fun SettingsScreen(
                 if (showGoalDialog) {
                     GoalSettingDialog(
                         currentGoalMl = state.goalMl,
-                        onConfirm = { goal ->
-                            viewModel.updateDailyGoal(goal)
+                        currentGoalUpperMl = state.goalUpperMl,
+                        onConfirm = { goal, upper ->
+                            viewModel.updateDailyGoal(goal, upper)
                             showGoalDialog = false
                         },
                         onDismiss = { showGoalDialog = false },

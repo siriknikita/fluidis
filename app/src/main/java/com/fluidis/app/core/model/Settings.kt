@@ -4,6 +4,7 @@ import kotlinx.datetime.LocalDate
 
 data class Settings(
     val dailyGoalMl: Int = 2000,
+    val dailyGoalUpperMl: Int? = null,
     val waterServingMl: Int = 500,
     val teaServingMl: Int = 350,
     val coffeeServingMl: Int = 350,
@@ -13,6 +14,12 @@ data class Settings(
     val analyticsStartDate: LocalDate? = null,
     val selectedChartMode: ChartMode = ChartMode.BAR,
 ) {
+    val hasGoalRange: Boolean
+        get() = dailyGoalUpperMl != null && dailyGoalUpperMl > dailyGoalMl
+
+    val effectiveUpperMl: Int
+        get() = if (hasGoalRange) dailyGoalUpperMl!! else dailyGoalMl
+
     fun servingMlFor(drinkType: DrinkType): Int = when (drinkType) {
         DrinkType.WATER -> waterServingMl
         DrinkType.TEA -> teaServingMl

@@ -27,17 +27,21 @@ import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.fluidis.app.core.theme.GoalGold
-import com.fluidis.app.core.ui.AnimationConstants
 import com.fluidis.app.core.theme.GoalGreen
+import com.fluidis.app.core.theme.OverUpperAmber
+import com.fluidis.app.core.ui.AnimationConstants
 
 @Composable
 fun DailySummary(
     totalMl: Int,
     goalMl: Int,
+    goalUpperMl: Int?,
     progressFraction: Float,
     goalReached: Boolean,
+    overUpperBound: Boolean,
     remainingMl: Int,
     overGoalMl: Int,
+    overUpperMl: Int,
     modifier: Modifier = Modifier,
 ) {
     val animatedProgress by animateFloatAsState(
@@ -45,6 +49,8 @@ fun DailySummary(
         animationSpec = tween(durationMillis = AnimationConstants.PROGRESS_DURATION_MS),
         label = "water_fill",
     )
+
+    val hasRange = goalUpperMl != null && goalUpperMl > goalMl
 
     ElevatedCard(
         modifier = modifier.fillMaxWidth(),
@@ -56,13 +62,14 @@ fun DailySummary(
             WaterDropIndicator(
                 progress = animatedProgress,
                 goalReached = goalReached,
+                overUpperBound = overUpperBound,
                 modifier = Modifier.size(120.dp),
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "$totalMl / $goalMl ml",
+                text = if (hasRange) "$totalMl / $goalMl–$goalUpperMl ml" else "$totalMl / $goalMl ml",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
             )
@@ -73,19 +80,30 @@ fun DailySummary(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
             ) {
-                if (goalReached) {
-                    Text(
-                        text = if (overGoalMl > 0) "Goal reached! +$overGoalMl ml" else "Goal reached!",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = GoalGreen,
-                        fontWeight = FontWeight.Medium,
-                    )
-                } else {
-                    Text(
-                        text = "$remainingMl ml remaining",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                when {
+                    overUpperBound -> {
+                        Text(
+                            text = "Over upper limit! +$overUpperMl ml",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = OverUpperAmber,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
+                    goalReached -> {
+                        Text(
+                            text = if (overGoalMl > 0) "Goal reached! +$overGoalMl ml" else "Goal reached!",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = GoalGreen,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
+                    else -> {
+                        Text(
+                            text = "$remainingMl ml remaining",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
 
@@ -104,6 +122,7 @@ fun DailySummary(
 private fun WaterDropIndicator(
     progress: Float,
     goalReached: Boolean,
+    overUpperBound: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
@@ -121,14 +140,18 @@ private fun WaterDropIndicator(
         clipPath(dropPath) {
             val fillTop = size.height * (1f - progress)
 
-            val fillColor = if (goalReached) {
-                Brush.verticalGradient(
+            val fillColor = when {
+                overUpperBound -> Brush.verticalGradient(
+                    colors = listOf(OverUpperAmber, Color(0xFFD84315)),
+                    startY = fillTop,
+                    endY = size.height,
+                )
+                goalReached -> Brush.verticalGradient(
                     colors = listOf(GoalGold, GoalGreen),
                     startY = fillTop,
                     endY = size.height,
                 )
-            } else {
-                Brush.verticalGradient(
+                else -> Brush.verticalGradient(
                     colors = listOf(
                         primaryColor.copy(alpha = 0.7f),
                         primaryColor,
@@ -146,9 +169,14 @@ private fun WaterDropIndicator(
         }
 
         // Subtle outline
+        val outlineColor = when {
+            overUpperBound -> OverUpperAmber.copy(alpha = 0.5f)
+            goalReached -> GoalGreen.copy(alpha = 0.5f)
+            else -> primaryColor.copy(alpha = 0.3f)
+        }
         drawPath(
             path = dropPath,
-            color = if (goalReached) GoalGreen.copy(alpha = 0.5f) else primaryColor.copy(alpha = 0.3f),
+            color = outlineColor,
             style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f),
         )
     }

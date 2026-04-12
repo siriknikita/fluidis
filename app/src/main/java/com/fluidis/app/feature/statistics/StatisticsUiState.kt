@@ -22,5 +22,7 @@ sealed interface StatisticsUiState {
         val daysTracked: Int,
         val daysGoalMet: Int,
         val goalMl: Int,
+        val goalUpperMl: Int?,
+        val daysOverUpper: Int,
     ) : StatisticsUiState
 }

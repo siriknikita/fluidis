@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.fluidis.app.core.model.DailyTotal
 import com.fluidis.app.core.theme.DotBelowGoal
 import com.fluidis.app.core.theme.DotGoalMet
+import com.fluidis.app.core.theme.DotOverUpper
 import com.fluidis.app.feature.history.MonthYear
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DayOfWeek
@@ -42,6 +43,7 @@ fun CalendarView(
     currentMonth: MonthYear,
     datesWithEntries: Map<LocalDate, DailyTotal>,
     goalMl: Int,
+    goalUpperMl: Int?,
     selectedDate: LocalDate?,
     onDateSelected: (LocalDate) -> Unit,
     onPreviousMonth: () -> Unit,
@@ -104,6 +106,7 @@ fun CalendarView(
             selectedDate = selectedDate,
             datesWithEntries = datesWithEntries,
             goalMl = goalMl,
+            goalUpperMl = goalUpperMl,
             onDateSelected = onDateSelected,
         )
     }
@@ -118,6 +121,7 @@ private fun CalendarGrid(
     selectedDate: LocalDate?,
     datesWithEntries: Map<LocalDate, DailyTotal>,
     goalMl: Int,
+    goalUpperMl: Int?,
     onDateSelected: (LocalDate) -> Unit,
 ) {
     val totalCells = startOffset + daysInMonth
@@ -147,6 +151,7 @@ private fun CalendarGrid(
                             isSelected = isSelected,
                             dailyTotal = dailyTotal,
                             goalMl = goalMl,
+                            goalUpperMl = goalUpperMl,
                             onClick = { onDateSelected(date) },
                         )
                     }
@@ -163,6 +168,7 @@ private fun CalendarDay(
     isSelected: Boolean,
     dailyTotal: DailyTotal?,
     goalMl: Int,
+    goalUpperMl: Int?,
     onClick: () -> Unit,
 ) {
     val backgroundColor = when {
@@ -191,7 +197,11 @@ private fun CalendarDay(
         )
 
         if (dailyTotal != null) {
-            val dotColor = if (dailyTotal.total >= goalMl) DotGoalMet else DotBelowGoal
+            val dotColor = when {
+                goalUpperMl != null && goalUpperMl > goalMl && dailyTotal.total > goalUpperMl -> DotOverUpper
+                dailyTotal.total >= goalMl -> DotGoalMet
+                else -> DotBelowGoal
+            }
             Box(
                 modifier = Modifier
                     .size(6.dp)

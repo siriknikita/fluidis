@@ -40,6 +40,7 @@ class HomeViewModel @Inject constructor(
         HomeUiState.Success(
             totalMl = entries.sumOf { it.amountMl },
             goalMl = settings.dailyGoalMl,
+            goalUpperMl = settings.dailyGoalUpperMl,
             drinkTotals = totalsMap,
             drinkServingCounts = servingCounts,
             maxServings = DrinkType.entries.associateWith { settings.maxServingsFor(it) },

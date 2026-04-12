@@ -38,6 +38,7 @@ fun HistoryScreen(
                     currentMonth = state.currentMonth,
                     datesWithEntries = state.datesWithEntries,
                     goalMl = state.goalMl,
+                    goalUpperMl = state.goalUpperMl,
                     selectedDate = state.selectedDate,
                     onDateSelected = viewModel::selectDate,
                     onPreviousMonth = { viewModel.navigateMonth(-1) },

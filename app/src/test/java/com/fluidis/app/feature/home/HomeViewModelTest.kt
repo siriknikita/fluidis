@@ -20,6 +20,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -149,6 +150,7 @@ class HomeViewModelTest {
         val state = HomeUiState.Success(
             totalMl = 2500,
             goalMl = 2000,
+            goalUpperMl = null,
             drinkTotals = emptyMap(),
             drinkServingCounts = emptyMap(),
             maxServings = emptyMap(),
@@ -156,7 +158,46 @@ class HomeViewModelTest {
             servingSizes = emptyMap(),
         )
         assertTrue(state.goalReached)
+        assertTrue(state.inRange)
+        assertFalse(state.overUpperBound)
         assertEquals(500, state.overGoalMl)
         assertEquals(0, state.remainingMl)
+    }
+
+    @Test
+    fun `goal range in range computed correctly`() {
+        val state = HomeUiState.Success(
+            totalMl = 2500,
+            goalMl = 2000,
+            goalUpperMl = 3000,
+            drinkTotals = emptyMap(),
+            drinkServingCounts = emptyMap(),
+            maxServings = emptyMap(),
+            recentEntries = emptyList(),
+            servingSizes = emptyMap(),
+        )
+        assertTrue(state.goalReached)
+        assertTrue(state.inRange)
+        assertFalse(state.overUpperBound)
+        assertTrue(state.hasGoalRange)
+        assertEquals(0, state.overUpperMl)
+    }
+
+    @Test
+    fun `over upper bound computed correctly`() {
+        val state = HomeUiState.Success(
+            totalMl = 3500,
+            goalMl = 2000,
+            goalUpperMl = 3000,
+            drinkTotals = emptyMap(),
+            drinkServingCounts = emptyMap(),
+            maxServings = emptyMap(),
+            recentEntries = emptyList(),
+            servingSizes = emptyMap(),
+        )
+        assertTrue(state.goalReached)
+        assertFalse(state.inRange)
+        assertTrue(state.overUpperBound)
+        assertEquals(500, state.overUpperMl)
     }
 }

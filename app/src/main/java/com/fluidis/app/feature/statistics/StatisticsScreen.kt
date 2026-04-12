@@ -70,6 +70,7 @@ fun StatisticsScreen(
                 IntakeChart(
                     dailyTotals = state.dailyTotals,
                     goalMl = state.goalMl,
+                    goalUpperMl = state.goalUpperMl,
                     chartMode = state.chartMode,
                     onChartModeChange = viewModel::setChartMode,
                 )
@@ -79,6 +80,8 @@ fun StatisticsScreen(
                     daysTracked = state.daysTracked,
                     daysGoalMet = state.daysGoalMet,
                     goalMl = state.goalMl,
+                    goalUpperMl = state.goalUpperMl,
+                    daysOverUpper = state.daysOverUpper,
                 )
 
                 DrinkBreakdownCard(

@@ -8,6 +8,7 @@ sealed interface SettingsUiState {
 
     data class Success(
         val goalMl: Int,
+        val goalUpperMl: Int?,
         val servingSizes: Map<DrinkType, Int>,
         val maxServings: Map<DrinkType, Int>,
         val analyticsStartDate: LocalDate?,

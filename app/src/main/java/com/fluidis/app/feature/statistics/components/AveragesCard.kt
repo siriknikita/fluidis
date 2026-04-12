@@ -20,6 +20,8 @@ fun AveragesCard(
     daysTracked: Int,
     daysGoalMet: Int,
     goalMl: Int,
+    goalUpperMl: Int?,
+    daysOverUpper: Int,
     modifier: Modifier = Modifier,
 ) {
     ElevatedCard(modifier = modifier.fillMaxWidth()) {
@@ -37,7 +39,13 @@ fun AveragesCard(
             ) {
                 StatItem(label = "Avg/day", value = "$averageMl ml")
                 StatItem(label = "Days tracked", value = "$daysTracked")
-                StatItem(label = "Goal met", value = "$daysGoalMet/$daysTracked")
+                if (goalUpperMl != null && goalUpperMl > goalMl) {
+                    val daysInRange = daysGoalMet - daysOverUpper
+                    StatItem(label = "In range", value = "$daysInRange/$daysTracked")
+                    StatItem(label = "Over limit", value = "$daysOverUpper/$daysTracked")
+                } else {
+                    StatItem(label = "Goal met", value = "$daysGoalMet/$daysTracked")
+                }
             }
         }
     }

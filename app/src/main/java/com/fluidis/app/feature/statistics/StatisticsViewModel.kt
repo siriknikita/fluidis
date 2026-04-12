@@ -47,6 +47,9 @@ class StatisticsViewModel @Inject constructor(
             val totalMl = dailyTotals.sumOf { it.total }
             val averageMl = if (daysTracked > 0) totalMl / daysTracked else 0
             val daysGoalMet = dailyTotals.count { it.total >= settings.dailyGoalMl }
+            val daysOverUpper = if (settings.hasGoalRange) {
+                dailyTotals.count { it.total > settings.effectiveUpperMl }
+            } else 0
 
             StatisticsUiState.Success(
                 period = period,
@@ -57,6 +60,8 @@ class StatisticsViewModel @Inject constructor(
                 daysTracked = daysTracked,
                 daysGoalMet = daysGoalMet,
                 goalMl = settings.dailyGoalMl,
+                goalUpperMl = settings.dailyGoalUpperMl,
+                daysOverUpper = daysOverUpper,
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StatisticsUiState.Loading)

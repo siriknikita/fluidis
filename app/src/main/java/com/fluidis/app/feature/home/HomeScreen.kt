@@ -83,10 +83,13 @@ private fun HomeContent(
         DailySummary(
             totalMl = state.totalMl,
             goalMl = state.goalMl,
+            goalUpperMl = state.goalUpperMl,
             progressFraction = state.progressFraction,
             goalReached = state.goalReached,
+            overUpperBound = state.overUpperBound,
             remainingMl = state.remainingMl,
             overGoalMl = state.overGoalMl,
+            overUpperMl = state.overUpperMl,
         )
 
         DrinkType.entries.forEach { drinkType ->

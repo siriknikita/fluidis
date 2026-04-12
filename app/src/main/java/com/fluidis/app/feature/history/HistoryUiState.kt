@@ -16,6 +16,7 @@ sealed interface HistoryUiState {
         val currentMonth: MonthYear,
         val datesWithEntries: Map<LocalDate, DailyTotal>,
         val goalMl: Int,
+        val goalUpperMl: Int?,
         val selectedDate: LocalDate?,
         val selectedDateEntries: List<DrinkEntry>,
         val selectedDateTotal: Int,

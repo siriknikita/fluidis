@@ -27,6 +27,7 @@ class SettingsViewModel @Inject constructor(
         val detectedDate = earliestDate?.let { LocalDate.parse(it) }
         SettingsUiState.Success(
             goalMl = settings.dailyGoalMl,
+            goalUpperMl = settings.dailyGoalUpperMl,
             servingSizes = DrinkType.entries.associateWith { settings.servingMlFor(it) },
             maxServings = DrinkType.entries.associateWith { settings.maxServingsFor(it) },
             analyticsStartDate = settings.analyticsStartDate,
@@ -34,10 +35,10 @@ class SettingsViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState.Loading)
 
-    fun updateDailyGoal(goalMl: Int) {
+    fun updateDailyGoal(goalMl: Int, upperMl: Int? = null) {
         if (goalMl <= 0) return
         viewModelScope.launch {
-            settingsDataStore.updateDailyGoal(goalMl)
+            settingsDataStore.updateDailyGoal(goalMl, upperMl)
         }
     }
 

@@ -31,6 +31,7 @@ class SettingsDataStore @Inject constructor(
         val WATER_MAX_SERVINGS = intPreferencesKey("water_max_servings")
         val TEA_MAX_SERVINGS = intPreferencesKey("tea_max_servings")
         val COFFEE_MAX_SERVINGS = intPreferencesKey("coffee_max_servings")
+        val DAILY_GOAL_UPPER_ML = intPreferencesKey("daily_goal_upper_ml")
         val ANALYTICS_START_DATE = stringPreferencesKey("analytics_start_date")
         val SELECTED_CHART_MODE = stringPreferencesKey("selected_chart_mode")
     }
@@ -38,6 +39,7 @@ class SettingsDataStore @Inject constructor(
     val settings: Flow<Settings> = context.dataStore.data.map { prefs ->
         Settings(
             dailyGoalMl = prefs[Keys.DAILY_GOAL_ML] ?: 2000,
+            dailyGoalUpperMl = prefs[Keys.DAILY_GOAL_UPPER_ML]?.takeIf { it > 0 },
             waterServingMl = prefs[Keys.WATER_SERVING_ML] ?: 500,
             teaServingMl = prefs[Keys.TEA_SERVING_ML] ?: 350,
             coffeeServingMl = prefs[Keys.COFFEE_SERVING_ML] ?: 350,
@@ -53,8 +55,15 @@ class SettingsDataStore @Inject constructor(
         )
     }
 
-    suspend fun updateDailyGoal(goalMl: Int) {
-        context.dataStore.edit { it[Keys.DAILY_GOAL_ML] = goalMl }
+    suspend fun updateDailyGoal(goalMl: Int, upperMl: Int? = null) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.DAILY_GOAL_ML] = goalMl
+            if (upperMl != null && upperMl > goalMl) {
+                prefs[Keys.DAILY_GOAL_UPPER_ML] = upperMl
+            } else {
+                prefs.remove(Keys.DAILY_GOAL_UPPER_ML)
+            }
+        }
     }
 
     suspend fun updateServingSize(drinkType: DrinkType, sizeMl: Int) {

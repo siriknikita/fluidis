@@ -31,12 +31,14 @@ import androidx.compose.ui.unit.dp
 import com.fluidis.app.core.model.ChartMode
 import com.fluidis.app.core.model.DailyTotal
 import com.fluidis.app.core.model.DrinkType
+import com.fluidis.app.core.theme.GoalGreen
 import com.fluidis.app.core.ui.ChartDefaults
 
 @Composable
 fun IntakeChart(
     dailyTotals: List<DailyTotal>,
     goalMl: Int,
+    goalUpperMl: Int?,
     chartMode: ChartMode,
     onChartModeChange: (ChartMode) -> Unit,
     modifier: Modifier = Modifier,
@@ -50,8 +52,9 @@ fun IntakeChart(
         color = onSurfaceVariant,
     )
 
-    val maxValue = remember(dailyTotals, goalMl) {
-        (dailyTotals.maxOfOrNull { it.total } ?: goalMl).coerceAtLeast(goalMl).let {
+    val effectiveUpper = goalUpperMl?.takeIf { it > goalMl } ?: goalMl
+    val maxValue = remember(dailyTotals, goalMl, effectiveUpper) {
+        (dailyTotals.maxOfOrNull { it.total } ?: effectiveUpper).coerceAtLeast(effectiveUpper).let {
             ((it / ChartDefaults.Y_AXIS_ROUND_INTERVAL) + 1) * ChartDefaults.Y_AXIS_ROUND_INTERVAL
         }
     }
@@ -93,15 +96,43 @@ fun IntakeChart(
                     val chartWidth = size.width - leftPadding
                     val chartHeight = size.height - bottomPadding
 
-                    // Goal line
+                    // Goal line(s)
+                    val dashEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 6f))
                     val goalY = chartHeight * (1f - goalMl.toFloat() / maxValue)
-                    drawLine(
-                        color = goalLineColor,
-                        start = Offset(leftPadding, goalY),
-                        end = Offset(size.width, goalY),
-                        strokeWidth = 1.5f,
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 6f)),
-                    )
+
+                    if (goalUpperMl != null && goalUpperMl > goalMl) {
+                        val upperY = chartHeight * (1f - goalUpperMl.toFloat() / maxValue)
+                        // Shaded band between lower and upper
+                        drawRect(
+                            color = GoalGreen.copy(alpha = 0.1f),
+                            topLeft = Offset(leftPadding, upperY),
+                            size = Size(chartWidth, goalY - upperY),
+                        )
+                        // Lower bound line
+                        drawLine(
+                            color = goalLineColor,
+                            start = Offset(leftPadding, goalY),
+                            end = Offset(size.width, goalY),
+                            strokeWidth = 1.5f,
+                            pathEffect = dashEffect,
+                        )
+                        // Upper bound line
+                        drawLine(
+                            color = goalLineColor,
+                            start = Offset(leftPadding, upperY),
+                            end = Offset(size.width, upperY),
+                            strokeWidth = 1.5f,
+                            pathEffect = dashEffect,
+                        )
+                    } else {
+                        drawLine(
+                            color = goalLineColor,
+                            start = Offset(leftPadding, goalY),
+                            end = Offset(size.width, goalY),
+                            strokeWidth = 1.5f,
+                            pathEffect = dashEffect,
+                        )
+                    }
 
                     when (chartMode) {
                         ChartMode.BAR -> drawBarChart(
