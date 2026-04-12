@@ -4,7 +4,10 @@
 default:
     @just --list
 
-# Build debug APK (copies to clipboard on macOS)
+# — Build ——————————————————————————————————————————
+
+# Build debug APK (copies path to clipboard on macOS)
+[group('build')]
 build *args:
     #!/bin/bash
     set -e
@@ -14,46 +17,61 @@ build *args:
     osascript -e "set the clipboard to POSIX file \"$APK_PATH\""
     echo "=== Build successful — APK copied to clipboard ==="
 
+# Build release APK
+[group('build')]
+release *args:
+    ./gradlew assembleRelease {{args}}
+
+# Clean build artifacts
+[group('build')]
+clean *args:
+    ./gradlew clean {{args}}
+
+# — Test ———————————————————————————————————————————
+
 # Run unit tests
+[group('test')]
 test *args:
     ./gradlew testDebugUnitTest {{args}}
 
-# Run Android instrumented tests (requires emulator/device)
+# Run Android instrumented tests (requires device)
+[group('test')]
 test-android *args:
     ./gradlew connectedDebugAndroidTest {{args}}
 
-# Build and install on connected device/emulator
-install *args:
-    ./gradlew installDebug {{args}}
-
 # Run lint check
+[group('test')]
 lint *args:
     ./gradlew lintDebug {{args}}
     @echo "Report: app/build/reports/lint-results-debug.html"
 
-# Clean build artifacts
-clean *args:
-    ./gradlew clean {{args}}
+# Run all checks (build + test + lint)
+[group('test')]
+check: build test lint
 
-# Build release APK
-release *args:
-    ./gradlew assembleRelease {{args}}
-
-# Connect to device over wireless ADB
-connect *args:
-    adeploy connect {{args}}
-
-# Pair with device for wireless debugging (one-time setup)
-pair addr code:
-    adeploy pair {{addr}} {{code}}
+# — Deploy —————————————————————————————————————————
 
 # Build and install wirelessly (main dev command)
+[group('deploy')]
 deploy *args:
     adeploy {{args}}
 
+# Connect to device over wireless ADB (usage: just connect [port])
+[group('deploy')]
+connect *args:
+    adeploy connect {{args}}
+
 # Disconnect wireless ADB
+[group('deploy')]
 disconnect:
     adeploy disconnect
 
-# Run all checks (build + test + lint)
-check: build test lint
+# Pair with device for wireless debugging (one-time)
+[group('deploy')]
+pair port code:
+    adeploy pair {{port}} {{code}}
+
+# Install via USB (fallback)
+[group('deploy')]
+install *args:
+    ./gradlew installDebug {{args}}
