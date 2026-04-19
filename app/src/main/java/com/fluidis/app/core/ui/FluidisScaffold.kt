@@ -83,11 +83,16 @@ fun FluidisScaffold(
 
     val hazeState = remember { HazeState() }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+    ) {
         Scaffold(
             modifier = Modifier
                 .fillMaxSize()
                 .hazeSource(state = hazeState),
+            containerColor = Color.Transparent,
             topBar = {
                 if (showBottomBar) {
                     CenterAlignedTopAppBar(
