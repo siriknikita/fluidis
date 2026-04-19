@@ -1,6 +1,8 @@
 package com.fluidis.app.core.ui
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -19,6 +21,7 @@ import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.WaterDrop
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -74,6 +77,8 @@ private val NavItemPillShape = RoundedCornerShape(20.dp)
 fun FluidisScaffold(
     navController: NavHostController,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+    isDetailPanelOpen: Boolean = false,
+    onDismissDetailPanel: () -> Unit = {},
     content: @Composable (Modifier) -> Unit,
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -100,12 +105,30 @@ fun FluidisScaffold(
                     CenterAlignedTopAppBar(
                         title = { Text("Fluidis") },
                         navigationIcon = {
-                            IconButton(onClick = {
-                                navController.navigate(SettingsRoute) {
-                                    launchSingleTop = true
+                            Crossfade(
+                                targetState = isDetailPanelOpen,
+                                animationSpec = tween(300),
+                                label = "topBarIcon",
+                            ) { showClose ->
+                                if (showClose) {
+                                    IconButton(onClick = onDismissDetailPanel) {
+                                        Icon(
+                                            Icons.Rounded.Close,
+                                            contentDescription = "Close",
+                                        )
+                                    }
+                                } else {
+                                    IconButton(onClick = {
+                                        navController.navigate(SettingsRoute) {
+                                            launchSingleTop = true
+                                        }
+                                    }) {
+                                        Icon(
+                                            Icons.Outlined.Settings,
+                                            contentDescription = "Settings",
+                                        )
+                                    }
                                 }
-                            }) {
-                                Icon(Icons.Outlined.Settings, contentDescription = "Settings")
                             }
                         },
                     )

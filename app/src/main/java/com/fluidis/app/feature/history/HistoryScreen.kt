@@ -17,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,6 +33,7 @@ import com.fluidis.app.feature.history.components.GoalDonutChart
 fun HistoryScreen(
     modifier: Modifier = Modifier,
     viewModel: HistoryViewModel = hiltViewModel(),
+    onDetailStateChanged: (isOpen: Boolean, dismiss: (() -> Unit)?) -> Unit = { _, _ -> },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -43,6 +45,14 @@ fun HistoryScreen(
         }
         is HistoryUiState.Success -> {
             val isDetailOpen = state.selectedDate != null
+
+            LaunchedEffect(isDetailOpen) {
+                onDetailStateChanged(
+                    isDetailOpen,
+                    if (isDetailOpen) viewModel::dismissDetail else null,
+                )
+            }
+
             val scale by animateFloatAsState(
                 targetValue = if (isDetailOpen) 0.92f else 1f,
                 animationSpec = tween(300),
@@ -110,7 +120,6 @@ fun HistoryScreen(
                                 date = date,
                                 entries = state.selectedDateEntries,
                                 totalMl = state.selectedDateTotal,
-                                onDismiss = viewModel::dismissDetail,
                                 onDeleteEntry = viewModel::deleteEntry,
                                 onEditEntry = { entry, amount, type ->
                                     viewModel.updateEntry(entry, amount, type)

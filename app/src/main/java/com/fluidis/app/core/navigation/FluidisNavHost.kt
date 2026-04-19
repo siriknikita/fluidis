@@ -16,6 +16,7 @@ fun FluidisNavHost(
     navController: NavHostController,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
+    onHistoryDetailStateChanged: (isOpen: Boolean, dismiss: (() -> Unit)?) -> Unit = { _, _ -> },
 ) {
     NavHost(
         navController = navController,
@@ -29,7 +30,9 @@ fun FluidisNavHost(
             StatisticsScreen()
         }
         composable<HistoryRoute> {
-            HistoryScreen()
+            HistoryScreen(
+                onDetailStateChanged = onHistoryDetailStateChanged,
+            )
         }
         composable<SettingsRoute> {
             SettingsScreen(onNavigateBack = { navController.popBackStack() })

@@ -1,24 +1,24 @@
 package com.fluidis.app.feature.history.components
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -42,7 +42,6 @@ fun DayDetailPanel(
     date: LocalDate,
     entries: List<DrinkEntry>,
     totalMl: Int,
-    onDismiss: () -> Unit,
     onDeleteEntry: (DrinkEntry) -> Unit,
     onEditEntry: (DrinkEntry, Int, DrinkType) -> Unit,
     onAddEntry: (LocalDate, DrinkType, Int) -> Unit,
@@ -53,13 +52,13 @@ fun DayDetailPanel(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .fillMaxHeight(0.85f),
+            .fillMaxHeight(1f),
     ) {
         // Panel surface with rounded top corners
         Surface(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 60.dp),
+                .padding(top = 76.dp),
             shape = PanelShape,
             color = MaterialTheme.colorScheme.surfaceContainerLow,
             tonalElevation = 2.dp,
@@ -117,28 +116,28 @@ fun DayDetailPanel(
             }
         }
 
-        // Floating action buttons above the panel
-        Row(
+        // Add button floating above the panel
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+                .padding(top = 4.dp, end = 20.dp),
+            contentAlignment = androidx.compose.ui.Alignment.TopEnd,
         ) {
-            FloatingActionButton(
-                onClick = onDismiss,
-                containerColor = MaterialTheme.colorScheme.error,
-                contentColor = MaterialTheme.colorScheme.onError,
-                shape = RoundedCornerShape(16.dp),
-            ) {
-                Icon(Icons.Rounded.Close, contentDescription = "Close")
-            }
-            FloatingActionButton(
+            IconButton(
                 onClick = { addingDrinkType = DrinkType.WATER },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .size(56.dp)
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outline,
+                        shape = CircleShape,
+                    ),
             ) {
-                Icon(Icons.Rounded.Add, contentDescription = "Add entry")
+                Icon(
+                    Icons.Rounded.Add,
+                    contentDescription = "Add entry",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                )
             }
         }
     }
