@@ -56,11 +56,6 @@ import com.fluidis.app.core.navigation.HistoryRoute
 import com.fluidis.app.core.navigation.HomeRoute
 import com.fluidis.app.core.navigation.SettingsRoute
 import com.fluidis.app.core.navigation.StatisticsRoute
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeEffect
-import dev.chrisbanes.haze.hazeSource
-import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
-import dev.chrisbanes.haze.materials.HazeMaterials
 
 private data class BottomNavItem(
     val label: String,
@@ -77,7 +72,7 @@ private val bottomNavItems = listOf(
 private val NavBarShape = RoundedCornerShape(28.dp)
 private val NavItemPillShape = RoundedCornerShape(20.dp)
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalHazeMaterialsApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FluidisScaffold(
     navController: NavHostController,
@@ -94,8 +89,6 @@ fun FluidisScaffold(
         currentDestination.hasRoute(item.route::class)
     }
 
-    val hazeState = remember { HazeState() }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -103,8 +96,7 @@ fun FluidisScaffold(
     ) {
         Scaffold(
             modifier = Modifier
-                .fillMaxSize()
-                .hazeSource(state = hazeState),
+                .fillMaxSize(),
             containerColor = Color.Transparent,
             topBar = {
                 if (showBottomBar) {
@@ -214,7 +206,6 @@ fun FluidisScaffold(
                         restoreState = true
                     }
                 },
-                hazeState = hazeState,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(start = 24.dp, end = 24.dp, bottom = 16.dp)
@@ -224,22 +215,18 @@ fun FluidisScaffold(
     }
 }
 
-@OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
 private fun FloatingNavBar(
     items: List<BottomNavItem>,
     currentDestination: NavDestination?,
     onItemClick: (Any) -> Unit,
-    hazeState: HazeState,
     modifier: Modifier = Modifier,
 ) {
-    val hazeStyle = HazeMaterials.thin()
-
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(NavBarShape)
-            .hazeEffect(state = hazeState, style = hazeStyle)
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.95f))
             .border(0.5.dp, Color.White.copy(alpha = 0.08f), NavBarShape)
             .padding(horizontal = 12.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
