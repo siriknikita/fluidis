@@ -53,7 +53,7 @@ fun DayDetailPanel(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .fillMaxHeight(0.55f),
+            .fillMaxHeight(0.85f),
     ) {
         // Panel surface with rounded top corners
         Surface(
@@ -125,20 +125,20 @@ fun DayDetailPanel(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             FloatingActionButton(
-                onClick = { addingDrinkType = DrinkType.WATER },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                shape = RoundedCornerShape(16.dp),
-            ) {
-                Icon(Icons.Rounded.Add, contentDescription = "Add entry")
-            }
-            FloatingActionButton(
                 onClick = onDismiss,
                 containerColor = MaterialTheme.colorScheme.error,
                 contentColor = MaterialTheme.colorScheme.onError,
                 shape = RoundedCornerShape(16.dp),
             ) {
                 Icon(Icons.Rounded.Close, contentDescription = "Close")
+            }
+            FloatingActionButton(
+                onClick = { addingDrinkType = DrinkType.WATER },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                shape = RoundedCornerShape(16.dp),
+            ) {
+                Icon(Icons.Rounded.Add, contentDescription = "Add entry")
             }
         }
     }
