@@ -20,6 +20,8 @@ android {
         versionName = "1.0.0"
 
         testInstrumentationRunner = "com.fluidis.app.HiltTestRunner"
+
+        base.archivesName.set("fluidis")
     }
 
     signingConfigs {
