@@ -21,7 +21,7 @@ android {
 
         testInstrumentationRunner = "com.fluidis.app.HiltTestRunner"
 
-        base.archivesName.set("fluidis")
+        base.archivesName.set("Fluidis")
     }
 
     signingConfigs {
