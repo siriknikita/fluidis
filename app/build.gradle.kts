@@ -99,6 +99,10 @@ dependencies {
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.coroutines.android)
 
+    // Haze (frosted glass blur)
+    implementation(libs.haze)
+    implementation(libs.haze.materials)
+
     // Unit Tests
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
