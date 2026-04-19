@@ -5,9 +5,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -26,7 +27,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -50,22 +50,25 @@ fun DayDetailPanel(
     var editingEntry by remember { mutableStateOf<DrinkEntry?>(null) }
     var addingDrinkType by remember { mutableStateOf<DrinkType?>(null) }
 
-    Box(modifier = Modifier.fillMaxWidth()) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight(0.55f),
+    ) {
         // Panel surface with rounded top corners
         Surface(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 36.dp)
-                .align(Alignment.BottomCenter),
+                .fillMaxSize()
+                .padding(top = 60.dp),
             shape = PanelShape,
             color = MaterialTheme.colorScheme.surfaceContainerLow,
             tonalElevation = 2.dp,
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxSize()
                     .padding(top = 16.dp)
-                    .navigationBarsPadding(),
+                    .padding(bottom = 96.dp),
             ) {
                 // Date header
                 Column(
@@ -99,8 +102,8 @@ fun DayDetailPanel(
                 } else {
                     LazyColumn(
                         modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .height((entries.size * 48).coerceAtMost(300).dp),
+                            .weight(1f)
+                            .padding(horizontal = 16.dp),
                     ) {
                         items(entries, key = { it.id }) { entry ->
                             EntryItem(
@@ -111,8 +114,6 @@ fun DayDetailPanel(
                         }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
             }
         }
 
