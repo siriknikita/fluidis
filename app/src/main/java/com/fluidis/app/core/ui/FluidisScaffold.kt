@@ -1,8 +1,11 @@
 package com.fluidis.app.core.ui
 
-import androidx.compose.animation.Crossfade
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -108,9 +111,12 @@ fun FluidisScaffold(
                     CenterAlignedTopAppBar(
                         title = { Text("Fluidis") },
                         navigationIcon = {
-                            Crossfade(
+                            AnimatedContent(
                                 targetState = isDetailPanelOpen,
-                                animationSpec = tween(300),
+                                transitionSpec = {
+                                    fadeIn(tween(150, delayMillis = 150)) togetherWith
+                                        fadeOut(tween(150))
+                                },
                                 label = "topBarNavIcon",
                             ) { showClose ->
                                 if (showClose) {
@@ -146,9 +152,12 @@ fun FluidisScaffold(
                             }
                         },
                         actions = {
-                            Crossfade(
+                            AnimatedContent(
                                 targetState = isDetailPanelOpen,
-                                animationSpec = tween(300),
+                                transitionSpec = {
+                                    fadeIn(tween(150, delayMillis = 150)) togetherWith
+                                        fadeOut(tween(150))
+                                },
                                 label = "topBarAction",
                             ) { showAdd ->
                                 if (showAdd) {
@@ -170,7 +179,6 @@ fun FluidisScaffold(
                                         )
                                     }
                                 } else {
-                                    // Empty spacer to keep title centered
                                     Box(modifier = Modifier.size(48.dp))
                                 }
                             }
