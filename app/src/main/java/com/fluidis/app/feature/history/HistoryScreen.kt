@@ -19,6 +19,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -33,7 +36,7 @@ import com.fluidis.app.feature.history.components.GoalDonutChart
 fun HistoryScreen(
     modifier: Modifier = Modifier,
     viewModel: HistoryViewModel = hiltViewModel(),
-    onDetailStateChanged: (isOpen: Boolean, dismiss: (() -> Unit)?) -> Unit = { _, _ -> },
+    onDetailStateChanged: (isOpen: Boolean, dismiss: (() -> Unit)?, addEntry: (() -> Unit)?) -> Unit = { _, _, _ -> },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -45,11 +48,13 @@ fun HistoryScreen(
         }
         is HistoryUiState.Success -> {
             val isDetailOpen = state.selectedDate != null
+            var addRequested by remember { mutableStateOf(false) }
 
             LaunchedEffect(isDetailOpen) {
                 onDetailStateChanged(
                     isDetailOpen,
                     if (isDetailOpen) viewModel::dismissDetail else null,
+                    if (isDetailOpen) ({ addRequested = true }) else null,
                 )
             }
 
@@ -120,6 +125,8 @@ fun HistoryScreen(
                                 date = date,
                                 entries = state.selectedDateEntries,
                                 totalMl = state.selectedDateTotal,
+                                addRequested = addRequested,
+                                onAddConsumed = { addRequested = false },
                                 onDeleteEntry = viewModel::deleteEntry,
                                 onEditEntry = { entry, amount, type ->
                                     viewModel.updateEntry(entry, amount, type)

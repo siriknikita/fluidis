@@ -15,12 +15,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.WaterDrop
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -79,6 +81,7 @@ fun FluidisScaffold(
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     isDetailPanelOpen: Boolean = false,
     onDismissDetailPanel: () -> Unit = {},
+    onAddDetailEntry: () -> Unit = {},
     content: @Composable (Modifier) -> Unit,
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -108,13 +111,24 @@ fun FluidisScaffold(
                             Crossfade(
                                 targetState = isDetailPanelOpen,
                                 animationSpec = tween(300),
-                                label = "topBarIcon",
+                                label = "topBarNavIcon",
                             ) { showClose ->
                                 if (showClose) {
-                                    IconButton(onClick = onDismissDetailPanel) {
+                                    IconButton(
+                                        onClick = onDismissDetailPanel,
+                                        modifier = Modifier
+                                            .padding(start = 4.dp)
+                                            .size(40.dp)
+                                            .border(
+                                                width = 1.dp,
+                                                color = MaterialTheme.colorScheme.outline,
+                                                shape = CircleShape,
+                                            ),
+                                    ) {
                                         Icon(
                                             Icons.Rounded.Close,
                                             contentDescription = "Close",
+                                            modifier = Modifier.size(20.dp),
                                         )
                                     }
                                 } else {
@@ -128,6 +142,36 @@ fun FluidisScaffold(
                                             contentDescription = "Settings",
                                         )
                                     }
+                                }
+                            }
+                        },
+                        actions = {
+                            Crossfade(
+                                targetState = isDetailPanelOpen,
+                                animationSpec = tween(300),
+                                label = "topBarAction",
+                            ) { showAdd ->
+                                if (showAdd) {
+                                    IconButton(
+                                        onClick = onAddDetailEntry,
+                                        modifier = Modifier
+                                            .padding(end = 4.dp)
+                                            .size(40.dp)
+                                            .border(
+                                                width = 1.dp,
+                                                color = MaterialTheme.colorScheme.outline,
+                                                shape = CircleShape,
+                                            ),
+                                    ) {
+                                        Icon(
+                                            Icons.Rounded.Add,
+                                            contentDescription = "Add entry",
+                                            modifier = Modifier.size(20.dp),
+                                        )
+                                    }
+                                } else {
+                                    // Empty spacer to keep title centered
+                                    Box(modifier = Modifier.size(48.dp))
                                 }
                             }
                         },

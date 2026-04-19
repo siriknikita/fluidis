@@ -16,7 +16,7 @@ fun FluidisNavHost(
     navController: NavHostController,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
-    onHistoryDetailStateChanged: (isOpen: Boolean, dismiss: (() -> Unit)?) -> Unit = { _, _ -> },
+    onHistoryDetailStateChanged: (isOpen: Boolean, dismiss: (() -> Unit)?, addEntry: (() -> Unit)?) -> Unit = { _, _, _ -> },
 ) {
     NavHost(
         navController = navController,

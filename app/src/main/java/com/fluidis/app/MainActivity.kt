@@ -26,20 +26,23 @@ class MainActivity : ComponentActivity() {
                 val snackbarHostState = remember { SnackbarHostState() }
                 var isDetailPanelOpen by remember { mutableStateOf(false) }
                 var dismissDetailPanel by remember { mutableStateOf<(() -> Unit)?>(null) }
+                var addDetailEntry by remember { mutableStateOf<(() -> Unit)?>(null) }
 
                 FluidisScaffold(
                     navController = navController,
                     snackbarHostState = snackbarHostState,
                     isDetailPanelOpen = isDetailPanelOpen,
                     onDismissDetailPanel = { dismissDetailPanel?.invoke() },
+                    onAddDetailEntry = { addDetailEntry?.invoke() },
                 ) { modifier ->
                     FluidisNavHost(
                         navController = navController,
                         snackbarHostState = snackbarHostState,
                         modifier = modifier,
-                        onHistoryDetailStateChanged = { isOpen, dismiss ->
+                        onHistoryDetailStateChanged = { isOpen, dismiss, add ->
                             isDetailPanelOpen = isOpen
                             dismissDetailPanel = dismiss
+                            addDetailEntry = add
                         },
                     )
                 }
