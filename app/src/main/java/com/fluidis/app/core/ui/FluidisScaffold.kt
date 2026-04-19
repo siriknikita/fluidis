@@ -33,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.border
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -48,9 +49,10 @@ import com.fluidis.app.core.navigation.HomeRoute
 import com.fluidis.app.core.navigation.SettingsRoute
 import com.fluidis.app.core.navigation.StatisticsRoute
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
+import dev.chrisbanes.haze.materials.HazeMaterials
 
 private data class BottomNavItem(
     val label: String,
@@ -67,7 +69,7 @@ private val bottomNavItems = listOf(
 private val NavBarShape = RoundedCornerShape(28.dp)
 private val NavItemPillShape = RoundedCornerShape(20.dp)
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalHazeMaterialsApi::class)
 @Composable
 fun FluidisScaffold(
     navController: NavHostController,
@@ -115,11 +117,10 @@ fun FluidisScaffold(
                 Modifier
                     .padding(top = innerPadding.calculateTopPadding())
                     .then(
-                        if (showBottomBar) {
-                            Modifier
-                                .padding(bottom = 96.dp)
-                        } else {
+                        if (!showBottomBar) {
                             Modifier.padding(bottom = innerPadding.calculateBottomPadding())
+                        } else {
+                            Modifier
                         }
                     )
             )
@@ -148,6 +149,7 @@ fun FluidisScaffold(
     }
 }
 
+@OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
 private fun FloatingNavBar(
     items: List<BottomNavItem>,
@@ -156,19 +158,14 @@ private fun FloatingNavBar(
     hazeState: HazeState,
     modifier: Modifier = Modifier,
 ) {
-    val surfaceColor = MaterialTheme.colorScheme.surface
-    val containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+    val hazeStyle = HazeMaterials.thin()
 
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(NavBarShape)
-            .hazeEffect(state = hazeState) {
-                backgroundColor = surfaceColor
-                blurRadius = 24.dp
-                tints = listOf(HazeTint(surfaceColor.copy(alpha = 0.4f)))
-                noiseFactor = 0.1f
-            }
+            .hazeEffect(state = hazeState, style = hazeStyle)
+            .border(0.5.dp, Color.White.copy(alpha = 0.08f), NavBarShape)
             .padding(horizontal = 12.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
