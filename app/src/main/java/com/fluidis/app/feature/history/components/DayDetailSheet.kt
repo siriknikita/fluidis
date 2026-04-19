@@ -1,16 +1,19 @@
 package com.fluidis.app.feature.history.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -24,8 +27,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.fluidis.app.core.model.DrinkEntry
@@ -52,16 +55,39 @@ fun DayDetailSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 32.dp),
+                .graphicsLayer { clip = false },
         ) {
+            // Floating action buttons above the sheet
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .offset(y = (-52).dp)
+                    .padding(horizontal = 24.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                SmallFloatingActionButton(
+                    onClick = { addingDrinkType = DrinkType.WATER },
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                ) {
+                    Icon(Icons.Rounded.Add, contentDescription = "Add entry")
+                }
+                SmallFloatingActionButton(
+                    onClick = onDismiss,
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                ) {
+                    Icon(Icons.Rounded.Close, contentDescription = "Close")
+                }
+            }
+
+            // Sheet content
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 32.dp),
             ) {
                 Column {
                     Text(
@@ -75,34 +101,29 @@ fun DayDetailSheet(
                         color = MaterialTheme.colorScheme.primary,
                     )
                 }
-                SmallFloatingActionButton(
-                    onClick = { addingDrinkType = DrinkType.WATER },
-                ) {
-                    Icon(Icons.Rounded.Add, contentDescription = "Add entry")
-                }
-            }
 
-            Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider()
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(8.dp))
 
-            if (entries.isEmpty()) {
-                Text(
-                    text = "No entries for this day",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(vertical = 24.dp),
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier.height((entries.size * 48).coerceAtMost(300).dp),
-                ) {
-                    items(entries, key = { it.id }) { entry ->
-                        EntryItem(
-                            entry = entry,
-                            onEdit = { editingEntry = entry },
-                            onDelete = { onDeleteEntry(entry) },
-                        )
+                if (entries.isEmpty()) {
+                    Text(
+                        text = "No entries for this day",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 24.dp),
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.height((entries.size * 48).coerceAtMost(300).dp),
+                    ) {
+                        items(entries, key = { it.id }) { entry ->
+                            EntryItem(
+                                entry = entry,
+                                onEdit = { editingEntry = entry },
+                                onDelete = { onDeleteEntry(entry) },
+                            )
+                        }
                     }
                 }
             }
