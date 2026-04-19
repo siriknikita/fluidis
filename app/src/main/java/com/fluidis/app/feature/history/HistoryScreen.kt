@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,12 +52,22 @@ fun HistoryScreen(
             val isDetailOpen = state.selectedDate != null
             var addRequested by remember { mutableStateOf(false) }
 
+            BackHandler(enabled = isDetailOpen) {
+                viewModel.dismissDetail()
+            }
+
             LaunchedEffect(isDetailOpen) {
                 onDetailStateChanged(
                     isDetailOpen,
                     if (isDetailOpen) viewModel::dismissDetail else null,
                     if (isDetailOpen) ({ addRequested = true }) else null,
                 )
+            }
+
+            DisposableEffect(Unit) {
+                onDispose {
+                    onDetailStateChanged(false, null, null)
+                }
             }
 
             val scale by animateFloatAsState(
