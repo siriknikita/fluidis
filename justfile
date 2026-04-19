@@ -13,14 +13,20 @@ build *args:
     set -e
     echo "=== Building Fluidis (debug) ==="
     ./gradlew assembleDebug {{args}}
-    APK_PATH="$(pwd)/app/build/outputs/apk/debug/app-debug.apk"
+    APK_PATH="$(pwd)/app/build/outputs/apk/debug/Fluidis-debug.apk"
     osascript -e "set the clipboard to POSIX file \"$APK_PATH\""
     echo "=== Build successful — APK copied to clipboard ==="
 
-# Build release APK
+# Build release APK (copies path to clipboard on macOS)
 [group('build')]
 release *args:
+    #!/bin/bash
+    set -e
+    echo "=== Building Fluidis (release) ==="
     ./gradlew assembleRelease {{args}}
+    APK_PATH="$(pwd)/app/build/outputs/apk/release/Fluidis-release.apk"
+    osascript -e "set the clipboard to POSIX file \"$APK_PATH\""
+    echo "=== Build successful — APK copied to clipboard ==="
 
 # Clean build artifacts
 [group('build')]

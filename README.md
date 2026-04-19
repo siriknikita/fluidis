@@ -1,59 +1,88 @@
 # Fluidis
 
-A personal hydration tracking Android app. Track water, tea, and coffee intake with daily goals, analytics, calendar history, and editable entries.
+A personal hydration tracking Android app built with Kotlin and Jetpack Compose. Track water, tea, and coffee intake with daily goals, visual analytics, calendar history, and editable entries. Fully local — no backend, no accounts, no sync.
 
 ## Features
 
-- **Quick tracking** — Tap to add default servings, long-press for custom amounts
-- **Water drop progress** — Animated fill indicator with goal-reached celebration
-- **Statistics** — Daily intake charts (bar, stacked, line, area), averages, drink breakdown
-- **Calendar history** — Browse past days with color-coded goal indicators, edit/delete entries
-- **Settings** — Configurable daily goal, serving sizes, analytics start date
-- **Dark mode** — Follows system setting
+- **Quick tracking** — Tap to add default servings, long-press for custom amounts, hold minus to rapid-remove
+- **Water drop progress** — Animated Canvas-based fill indicator with gradient transitions (blue -> gold/green on goal met -> amber on upper bound exceeded)
+- **Statistics** — Four chart modes (bar, stacked bar, line, area) with period selection (week, month, all-time), averages, and drink breakdown
+- **Calendar history** — Month view with color-coded goal dots, slide-up detail panel for viewing/editing/adding entries per day
+- **Goal ranges** — Set a daily goal with an optional upper bound for balanced hydration
+- **Per-drink limits** — Configure maximum daily servings per drink type
+- **Settings** — Configurable daily goal (single or range), serving sizes, daily limits, analytics start date
+- **Dark mode** — Follows system setting with full Material 3 light/dark themes
 
 ## Tech Stack
 
-- Kotlin, Jetpack Compose, Material 3
-- Room (persistence), DataStore (preferences)
-- Hilt (DI), type-safe Compose Navigation
-- MVVM architecture with repository layer
+| Layer | Technology |
+|-------|-----------|
+| Language | Kotlin 2.1.20 |
+| UI | Jetpack Compose + Material 3 (BOM 2025.03.01) |
+| Persistence | Room 2.7.0 (entries) + DataStore 1.1.4 (preferences) |
+| DI | Hilt 2.55 |
+| Navigation | Type-safe Compose Navigation 2.9.0-alpha04 (`@Serializable` routes) |
+| Charts | Custom Canvas-based (no external chart library) |
+| Dates | kotlinx-datetime 0.6.2 |
+| Architecture | MVVM with repository layer |
+| Build | Gradle 8.13, AGP 8.9.1 |
+| Min SDK | 26 (Android 8.0) |
+| Target SDK | 35 (Android 15) |
 
-## Build & Run (macOS)
+## Build & Run
 
 ### Prerequisites
 
-- [Android Studio](https://developer.android.com/studio) (latest stable) or just the command-line SDK tools
 - JDK 17+
 - Android SDK with API 35
+- [just](https://github.com/casey/just) command runner (optional, or use the shell scripts)
 
-### Build
-
-```bash
-./gradlew assembleDebug
-```
-
-Or use the convenience scripts:
+### Commands
 
 ```bash
-./scripts/build.sh        # Debug build
-./scripts/test.sh         # Unit tests
-./scripts/install.sh      # Build + install on device/emulator
-./scripts/lint.sh         # Lint check
-./scripts/clean.sh        # Clean build
+just build          # Debug APK (copied to clipboard on macOS)
+just release        # Release APK (minified + shrunk, copied to clipboard)
+just test           # Unit tests
+just test-android   # Instrumented tests (needs emulator/device)
+just install        # Build + install on connected device/emulator
+just lint           # Lint check
+just clean          # Clean build
+just check          # Build + test + lint
+just deploy         # Wireless ADB deploy
+just connect        # Wireless ADB pairing
 ```
+
+Shell scripts in `scripts/` are available as an alternative (`build.sh`, `test.sh`, `install.sh`, `lint.sh`, `clean.sh`).
 
 ### Run
 
 1. Start an Android emulator (API 26+) or connect a device
-2. Run `./scripts/install.sh`
+2. Run `just install`
 3. Open "Fluidis" from the app drawer
 
 ## Project Structure
 
 ```
 app/src/main/java/com/fluidis/app/
-├── core/          # Database, DataStore, DI, theme, navigation
-└── feature/       # Home, Statistics, History, Settings screens
+├── FluidisApplication.kt              # @HiltAndroidApp entry point
+├── MainActivity.kt                    # @AndroidEntryPoint, Compose setup
+├── core/
+│   ├── database/                      # Room DB, DAO (flow-based queries)
+│   ├── datastore/                     # DataStore preferences wrapper
+│   ├── model/                         # Entities, enums, data classes
+│   ├── di/                            # Hilt modules (Database, DataStore)
+│   ├── theme/                         # Material 3 theme, colors, typography
+│   ├── navigation/                    # NavHost, @Serializable routes
+│   └── ui/                            # Scaffold, constants, input validation
+└── feature/
+    ├── home/                          # Main tracking screen
+    │   └── components/                # WaterDropIndicator, DrinkCard, CustomAmountDialog
+    ├── statistics/                    # Charts and analytics
+    │   └── components/                # IntakeChart, ChartModeSelector, AveragesCard, DrinkBreakdownCard
+    ├── history/                       # Calendar and entry management
+    │   └── components/                # CalendarView, DayDetailPanel, EditEntryDialog, GoalDonutChart
+    └── settings/                      # App preferences
+        └── components/                # GoalSettingDialog, ServingSizeSetting, MaxServingsDialog
 ```
 
 ## Defaults
@@ -64,6 +93,7 @@ app/src/main/java/com/fluidis/app/
 | Water serving | 500 ml |
 | Tea serving | 350 ml |
 | Coffee serving | 350 ml |
+| Max servings | Unlimited (0) |
 
 ## Extending
 

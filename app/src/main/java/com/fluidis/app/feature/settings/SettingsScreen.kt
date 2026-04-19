@@ -1,20 +1,24 @@
 package com.fluidis.app.feature.settings
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -78,85 +82,79 @@ fun SettingsScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .verticalScroll(rememberScrollState()),
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    // Daily Goal
-                    SectionHeader("Hydration")
-                    ListItem(
-                        headlineContent = { Text("Daily goal") },
-                        supportingContent = {
-                            val goalText = if (state.goalUpperMl != null && state.goalUpperMl > state.goalMl) {
-                                "${state.goalMl} – ${state.goalUpperMl} ml"
-                            } else {
-                                "${state.goalMl} ml"
-                            }
-                            Text(goalText)
-                        },
-                        modifier = Modifier.clickable { showGoalDialog = true },
-                    )
-
-                    HorizontalDivider()
-
-                    // Serving Sizes
-                    SectionHeader("Serving Sizes")
-                    DrinkType.entries.forEach { drinkType ->
-                        val currentSize = state.servingSizes[drinkType] ?: drinkType.defaultServingMl
+                    SettingsCard("Hydration") {
                         ListItem(
-                            headlineContent = { Text(drinkType.displayName) },
-                            supportingContent = { Text("$currentSize ml per serving") },
-                            leadingContent = {
-                                Icon(
-                                    imageVector = drinkType.icon,
-                                    contentDescription = null,
-                                    tint = drinkType.color,
-                                )
+                            headlineContent = { Text("Daily goal") },
+                            supportingContent = {
+                                val goalText = if (state.goalUpperMl != null && state.goalUpperMl > state.goalMl) {
+                                    "${state.goalMl} – ${state.goalUpperMl} ml"
+                                } else {
+                                    "${state.goalMl} ml"
+                                }
+                                Text(goalText)
                             },
-                            modifier = Modifier.clickable { editingServingDrinkType = drinkType },
+                            modifier = Modifier.clickable { showGoalDialog = true },
                         )
                     }
 
-                    HorizontalDivider()
+                    SettingsCard("Serving Sizes") {
+                        DrinkType.entries.forEach { drinkType ->
+                            val currentSize = state.servingSizes[drinkType] ?: drinkType.defaultServingMl
+                            ListItem(
+                                headlineContent = { Text(drinkType.displayName) },
+                                supportingContent = { Text("$currentSize ml per serving") },
+                                leadingContent = {
+                                    Icon(
+                                        imageVector = drinkType.icon,
+                                        contentDescription = null,
+                                        tint = drinkType.color,
+                                    )
+                                },
+                                modifier = Modifier.clickable { editingServingDrinkType = drinkType },
+                            )
+                        }
+                    }
 
-                    // Daily Limits
-                    SectionHeader("Daily Limits")
-                    DrinkType.entries.forEach { drinkType ->
-                        val currentMax = state.maxServings[drinkType] ?: 0
-                        val limitText = if (currentMax > 0) "$currentMax servings/day" else "Unlimited"
+                    SettingsCard("Daily Limits") {
+                        DrinkType.entries.forEach { drinkType ->
+                            val currentMax = state.maxServings[drinkType] ?: 0
+                            val limitText = if (currentMax > 0) "$currentMax servings/day" else "Unlimited"
+                            ListItem(
+                                headlineContent = { Text(drinkType.displayName) },
+                                supportingContent = { Text(limitText) },
+                                leadingContent = {
+                                    Icon(
+                                        imageVector = drinkType.icon,
+                                        contentDescription = null,
+                                        tint = drinkType.color,
+                                    )
+                                },
+                                modifier = Modifier.clickable { editingMaxServingsDrinkType = drinkType },
+                            )
+                        }
+                    }
+
+                    SettingsCard("Analytics") {
+                        val startDateText = state.analyticsStartDate?.toString()
+                            ?: state.detectedStartDate?.let { "$it (auto)" }
+                            ?: "Not set"
                         ListItem(
-                            headlineContent = { Text(drinkType.displayName) },
-                            supportingContent = { Text(limitText) },
-                            leadingContent = {
-                                Icon(
-                                    imageVector = drinkType.icon,
-                                    contentDescription = null,
-                                    tint = drinkType.color,
-                                )
-                            },
-                            modifier = Modifier.clickable { editingMaxServingsDrinkType = drinkType },
+                            headlineContent = { Text("Analytics start date") },
+                            supportingContent = { Text(startDateText) },
+                            modifier = Modifier.clickable { showDatePicker = true },
                         )
                     }
 
-                    HorizontalDivider()
-
-                    // Analytics
-                    SectionHeader("Analytics")
-                    val startDateText = state.analyticsStartDate?.toString()
-                        ?: state.detectedStartDate?.let { "$it (auto)" }
-                        ?: "Not set"
-                    ListItem(
-                        headlineContent = { Text("Analytics start date") },
-                        supportingContent = { Text(startDateText) },
-                        modifier = Modifier.clickable { showDatePicker = true },
-                    )
-
-                    HorizontalDivider()
-
-                    // About
-                    SectionHeader("About")
-                    ListItem(
-                        headlineContent = { Text("Fluidis") },
-                        supportingContent = { Text("Version ${BuildConfig.VERSION_NAME}") },
-                    )
+                    SettingsCard("About") {
+                        ListItem(
+                            headlineContent = { Text("Fluidis") },
+                            supportingContent = { Text("Version ${BuildConfig.VERSION_NAME}") },
+                        )
+                    }
                 }
 
                 // Dialogs
@@ -232,13 +230,25 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun SectionHeader(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-    )
+private fun SettingsCard(
+    title: String,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    OutlinedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.outlinedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        ),
+    ) {
+        Column {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            )
+            content()
+        }
+    }
 }

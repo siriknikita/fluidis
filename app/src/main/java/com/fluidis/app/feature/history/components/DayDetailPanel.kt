@@ -1,30 +1,25 @@
 package com.fluidis.app.feature.history.components
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -33,57 +28,64 @@ import com.fluidis.app.core.model.DrinkType
 import com.fluidis.app.feature.home.components.CustomAmountDialog
 import kotlinx.datetime.LocalDate
 
-@OptIn(ExperimentalMaterial3Api::class)
+private val PanelShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+
 @Composable
-fun DayDetailSheet(
+fun DayDetailPanel(
     date: LocalDate,
     entries: List<DrinkEntry>,
     totalMl: Int,
-    onDismiss: () -> Unit,
+    addRequested: Boolean,
+    onAddConsumed: () -> Unit,
     onDeleteEntry: (DrinkEntry) -> Unit,
     onEditEntry: (DrinkEntry, Int, DrinkType) -> Unit,
     onAddEntry: (LocalDate, DrinkType, Int) -> Unit,
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var editingEntry by remember { mutableStateOf<DrinkEntry?>(null) }
     var addingDrinkType by remember { mutableStateOf<DrinkType?>(null) }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
+    LaunchedEffect(addRequested) {
+        if (addRequested) {
+            addingDrinkType = DrinkType.WATER
+            onAddConsumed()
+        }
+    }
+
+    // Panel surface with rounded top corners
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight(1f),
+        shape = PanelShape,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        tonalElevation = 2.dp,
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 32.dp),
+                .fillMaxSize()
+                .padding(top = 16.dp)
+                .padding(bottom = 96.dp),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+            // Date header
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
             ) {
-                Column {
-                    Text(
-                        text = date.toString(),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Text(
-                        text = "Total: $totalMl ml",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                }
-                SmallFloatingActionButton(
-                    onClick = { addingDrinkType = DrinkType.WATER },
-                ) {
-                    Icon(Icons.Rounded.Add, contentDescription = "Add entry")
-                }
+                Text(
+                    text = date.toString(),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = "Total: $totalMl ml",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider()
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             Spacer(modifier = Modifier.height(8.dp))
 
             if (entries.isEmpty()) {
@@ -91,11 +93,13 @@ fun DayDetailSheet(
                     text = "No entries for this day",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(vertical = 24.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp),
                 )
             } else {
                 LazyColumn(
-                    modifier = Modifier.height((entries.size * 48).coerceAtMost(300).dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 16.dp),
                 ) {
                     items(entries, key = { it.id }) { entry ->
                         EntryItem(

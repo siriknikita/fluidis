@@ -20,15 +20,25 @@ android {
         versionName = "1.0.0"
 
         testInstrumentationRunner = "com.fluidis.app.HiltTestRunner"
+
+        base.archivesName.set("Fluidis")
+    }
+
+    signingConfigs {
+        getByName("debug") {
+            // Uses default debug keystore at ~/.android/debug.keystore
+        }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
