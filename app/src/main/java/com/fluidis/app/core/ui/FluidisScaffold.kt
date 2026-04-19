@@ -85,7 +85,9 @@ fun FluidisScaffold(
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .hazeSource(state = hazeState),
             topBar = {
                 if (showBottomBar) {
                     CenterAlignedTopAppBar(
@@ -110,7 +112,6 @@ fun FluidisScaffold(
                     .then(
                         if (showBottomBar) {
                             Modifier
-                                .hazeSource(state = hazeState)
                                 .padding(bottom = 96.dp)
                         } else {
                             Modifier.padding(bottom = innerPadding.calculateBottomPadding())
