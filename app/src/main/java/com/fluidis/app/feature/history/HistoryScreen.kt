@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -14,6 +16,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fluidis.app.feature.history.components.CalendarView
 import com.fluidis.app.feature.history.components.DayDetailSheet
+import com.fluidis.app.feature.history.components.GoalDonutChart
 
 @Composable
 fun HistoryScreen(
@@ -32,6 +35,7 @@ fun HistoryScreen(
             Column(
                 modifier = modifier
                     .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp, vertical = 8.dp),
             ) {
                 CalendarView(
@@ -43,6 +47,12 @@ fun HistoryScreen(
                     onDateSelected = viewModel::selectDate,
                     onPreviousMonth = { viewModel.navigateMonth(-1) },
                     onNextMonth = { viewModel.navigateMonth(1) },
+                )
+
+                GoalDonutChart(
+                    datesWithEntries = state.datesWithEntries,
+                    goalMl = state.goalMl,
+                    goalUpperMl = state.goalUpperMl,
                 )
             }
 
