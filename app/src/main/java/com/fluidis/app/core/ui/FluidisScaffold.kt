@@ -158,10 +158,11 @@ private fun FloatingNavBar(
             .fillMaxWidth()
             .clip(NavBarShape)
             .hazeEffect(state = hazeState) {
+                backgroundColor = surfaceColor
                 blurRadius = 24.dp
-                tints = listOf(HazeTint(surfaceColor.copy(alpha = 0.6f)))
+                tints = listOf(HazeTint(surfaceColor.copy(alpha = 0.4f)))
+                noiseFactor = 0.1f
             }
-            .background(containerColor.copy(alpha = 0.3f))
             .padding(horizontal = 12.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
