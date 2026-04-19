@@ -8,13 +8,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -28,8 +29,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.fluidis.app.core.model.DrinkEntry
@@ -55,80 +56,84 @@ fun DayDetailSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .graphicsLayer { clip = false },
-        ) {
-            // Floating action buttons above the sheet
-            Row(
+        dragHandle = {
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .offset(y = (-68).dp)
-                    .padding(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                    .padding(top = 8.dp),
             ) {
-                FloatingActionButton(
-                    onClick = { addingDrinkType = DrinkType.WATER },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    shape = RoundedCornerShape(16.dp),
+                // Default drag handle in center
+                BottomSheetDefaults.DragHandle(
+                    modifier = Modifier.align(Alignment.TopCenter),
+                )
+                // Floating action buttons above the sheet edge
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .offset(y = (-36).dp)
+                        .padding(horizontal = 20.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Icon(Icons.Rounded.Add, contentDescription = "Add entry")
-                }
-                FloatingActionButton(
-                    onClick = onDismiss,
-                    containerColor = MaterialTheme.colorScheme.error,
-                    contentColor = MaterialTheme.colorScheme.onError,
-                    shape = RoundedCornerShape(16.dp),
-                ) {
-                    Icon(Icons.Rounded.Close, contentDescription = "Close")
+                    FloatingActionButton(
+                        onClick = { addingDrinkType = DrinkType.WATER },
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        shape = RoundedCornerShape(16.dp),
+                    ) {
+                        Icon(Icons.Rounded.Add, contentDescription = "Add entry")
+                    }
+                    FloatingActionButton(
+                        onClick = onDismiss,
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                        shape = RoundedCornerShape(16.dp),
+                    ) {
+                        Icon(Icons.Rounded.Close, contentDescription = "Close")
+                    }
                 }
             }
+        },
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 32.dp),
+        ) {
+            Column {
+                Text(
+                    text = date.toString(),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = "Total: $totalMl ml",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
 
-            // Sheet content
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 32.dp),
-            ) {
-                Column {
-                    Text(
-                        text = date.toString(),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Text(
-                        text = "Total: $totalMl ml",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                }
+            Spacer(modifier = Modifier.height(12.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(8.dp))
 
-                Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider()
-                Spacer(modifier = Modifier.height(8.dp))
-
-                if (entries.isEmpty()) {
-                    Text(
-                        text = "No entries for this day",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 24.dp),
-                    )
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.height((entries.size * 48).coerceAtMost(300).dp),
-                    ) {
-                        items(entries, key = { it.id }) { entry ->
-                            EntryItem(
-                                entry = entry,
-                                onEdit = { editingEntry = entry },
-                                onDelete = { onDeleteEntry(entry) },
-                            )
-                        }
+            if (entries.isEmpty()) {
+                Text(
+                    text = "No entries for this day",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = 24.dp),
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.height((entries.size * 48).coerceAtMost(300).dp),
+                ) {
+                    items(entries, key = { it.id }) { entry ->
+                        EntryItem(
+                            entry = entry,
+                            onEdit = { editingEntry = entry },
+                            onDelete = { onDeleteEntry(entry) },
+                        )
                     }
                 }
             }
