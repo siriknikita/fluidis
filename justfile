@@ -33,6 +33,11 @@ release *args:
 clean *args:
     ./gradlew clean {{args}}
 
+# Publish a GitHub release (builds APKs, tags, uploads). Usage: just publish-release [version|--draft]
+[group('build')]
+publish-release *args:
+    ./scripts/release.sh {{args}}
+
 # — Test ———————————————————————————————————————————
 
 # Run unit tests
