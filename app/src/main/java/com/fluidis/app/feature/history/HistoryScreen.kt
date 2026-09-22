@@ -1,12 +1,13 @@
 package com.fluidis.app.feature.history
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -30,9 +31,12 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.fluidis.app.core.model.DrinkType
 import com.fluidis.app.feature.history.components.CalendarView
+import com.fluidis.app.feature.history.components.DayDetailCard
 import com.fluidis.app.feature.history.components.DayDetailPanel
-import com.fluidis.app.feature.history.components.GoalDonutChart
+import com.fluidis.app.feature.history.components.MonthSummaryCard
+import com.fluidis.app.feature.home.components.CustomAmountDialog
 
 @Composable
 fun HistoryScreen(
@@ -49,18 +53,20 @@ fun HistoryScreen(
             }
         }
         is HistoryUiState.Success -> {
-            val isDetailOpen = state.selectedDate != null
+            // A day is always selected and summarised inline; the overlay is only the entry list.
+            val isEntriesOpen = state.isEntriesOpen
             var addRequested by remember { mutableStateOf(false) }
+            var addingDrinkType by remember { mutableStateOf<DrinkType?>(null) }
 
-            BackHandler(enabled = isDetailOpen) {
+            BackHandler(enabled = isEntriesOpen) {
                 viewModel.dismissDetail()
             }
 
-            LaunchedEffect(isDetailOpen) {
+            LaunchedEffect(isEntriesOpen) {
                 onDetailStateChanged(
-                    isDetailOpen,
-                    if (isDetailOpen) viewModel::dismissDetail else null,
-                    if (isDetailOpen) ({ addRequested = true }) else null,
+                    isEntriesOpen,
+                    if (isEntriesOpen) viewModel::dismissDetail else null,
+                    if (isEntriesOpen) ({ addRequested = true }) else null,
                 )
             }
 
@@ -71,18 +77,17 @@ fun HistoryScreen(
             }
 
             val scale by animateFloatAsState(
-                targetValue = if (isDetailOpen) 0.92f else 1f,
+                targetValue = if (isEntriesOpen) 0.92f else 1f,
                 animationSpec = tween(300),
                 label = "bgScale",
             )
             val bgAlpha by animateFloatAsState(
-                targetValue = if (isDetailOpen) 0.5f else 1f,
+                targetValue = if (isEntriesOpen) 0.5f else 1f,
                 animationSpec = tween(300),
                 label = "bgAlpha",
             )
 
             Box(modifier = modifier.fillMaxSize()) {
-                // Background content with scale-down animation
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -93,6 +98,7 @@ fun HistoryScreen(
                         }
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     CalendarView(
                         currentMonth = state.currentMonth,
@@ -104,20 +110,34 @@ fun HistoryScreen(
                         onDateSelected = viewModel::selectDate,
                         onPreviousMonth = { viewModel.navigateMonth(-1) },
                         onNextMonth = { viewModel.navigateMonth(1) },
+                        onToday = viewModel::goToToday,
                     )
 
-                    GoalDonutChart(
-                        datesWithEntries = state.datesWithEntries,
+                    DayDetailCard(
+                        date = state.selectedDate,
+                        isToday = state.selectedDate == state.today,
+                        summary = state.selectedDay,
                         goalMl = state.goalMl,
                         goalUpperMl = state.goalUpperMl,
+                        onAddEntry = { addingDrinkType = it },
+                        onShowEntries = viewModel::showEntries,
                     )
 
-                    Spacer(modifier = Modifier.height(96.dp))
+                    // Nothing logged this month — the summary would be a ring of nothing.
+                    if (state.month.loggedDays > 0) {
+                        MonthSummaryCard(
+                            month = state.currentMonth,
+                            summary = state.month,
+                            hasGoalRange = (state.goalUpperMl ?: 0) > state.goalMl,
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(84.dp))
                 }
 
-                // Detail panel overlay
+                // Entries overlay
                 AnimatedVisibility(
-                    visible = isDetailOpen,
+                    visible = isEntriesOpen,
                     enter = slideInVertically(
                         initialOffsetY = { it },
                         animationSpec = tween(350),
@@ -127,28 +147,37 @@ fun HistoryScreen(
                         animationSpec = tween(300),
                     ),
                 ) {
-                    state.selectedDate?.let { date ->
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.3f)),
-                            contentAlignment = Alignment.BottomCenter,
-                        ) {
-                            DayDetailPanel(
-                                date = date,
-                                entries = state.selectedDateEntries,
-                                totalMl = state.selectedDateTotal,
-                                addRequested = addRequested,
-                                onAddConsumed = { addRequested = false },
-                                onDeleteEntry = viewModel::deleteEntry,
-                                onEditEntry = { entry, amount, type ->
-                                    viewModel.updateEntry(entry, amount, type)
-                                },
-                                onAddEntry = viewModel::addEntryToDate,
-                            )
-                        }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.BottomCenter,
+                    ) {
+                        DayDetailPanel(
+                            date = state.selectedDate,
+                            entries = state.selectedDay.entries,
+                            totalMl = state.selectedDay.totalMl,
+                            addRequested = addRequested,
+                            onAddConsumed = { addRequested = false },
+                            onDeleteEntry = viewModel::deleteEntry,
+                            onEditEntry = { entry, amount, type ->
+                                viewModel.updateEntry(entry, amount, type)
+                            },
+                            onAddEntry = viewModel::addEntryToDate,
+                        )
                     }
                 }
+            }
+
+            addingDrinkType?.let { drinkType ->
+                CustomAmountDialog(
+                    drinkType = drinkType,
+                    onConfirm = { amountMl ->
+                        viewModel.addEntryToDate(state.selectedDate, drinkType, amountMl)
+                        addingDrinkType = null
+                    },
+                    onDismiss = { addingDrinkType = null },
+                )
             }
         }
     }

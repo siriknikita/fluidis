@@ -16,14 +16,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
-import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.Month
-import kotlinx.datetime.minus
-import kotlinx.datetime.plus
 import javax.inject.Inject
 
 @HiltViewModel
@@ -34,92 +29,100 @@ class HistoryViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _currentMonth = MutableStateFlow(todayProvider.today.value.monthYear())
-    private val _selectedDate = MutableStateFlow<LocalDate?>(null)
+    private val _selectedDate = MutableStateFlow(todayProvider.today.value)
+    private val _entriesOpen = MutableStateFlow(false)
 
     init {
-        followMonthRollover()
+        followRollover()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<HistoryUiState> = combine(
         _currentMonth,
         _selectedDate,
+        _entriesOpen,
         settingsDataStore.settings,
         todayProvider.today,
-    ) { month, selectedDate, settings, today ->
-        MonthQuery(month, selectedDate, settings, today)
-    }.flatMapLatest { (month, selectedDate, settings, today) ->
-        val goalMl = settings.dailyGoalMl
-        val firstDay = LocalDate(month.year, month.month, 1)
-        val lastDay = firstDay.plus(1, DateTimeUnit.MONTH).minus(1, DateTimeUnit.DAY)
-
-        val entriesFlow = if (selectedDate != null) {
-            drinkEntryDao.getEntriesForDate(selectedDate.toString())
-        } else {
-            kotlinx.coroutines.flow.flowOf(emptyList())
-        }
-
+    ) { month, selectedDate, entriesOpen, settings, today ->
+        Query(month, selectedDate, entriesOpen, settings, today)
+    }.flatMapLatest { (month, selectedDate, entriesOpen, settings, today) ->
         combine(
-            drinkEntryDao.getDailyTotalsInRange(firstDay.toString(), lastDay.toString()),
-            entriesFlow,
+            drinkEntryDao.getDailyTotalsInRange(month.firstDay.toString(), month.lastDay.toString()),
+            drinkEntryDao.getEntriesForDate(selectedDate.toString()),
         ) { dailyTotals, selectedEntries ->
-            val datesMap = dailyTotals.associate { daily ->
-                LocalDate.parse(daily.date) to daily
-            }
             HistoryUiState.Success(
                 currentMonth = month,
                 today = today,
-                datesWithEntries = datesMap,
-                goalMl = goalMl,
+                datesWithEntries = dailyTotals.associateBy { LocalDate.parse(it.date) },
+                goalMl = settings.dailyGoalMl,
                 goalUpperMl = settings.dailyGoalUpperMl,
                 selectedDate = selectedDate,
-                selectedDateEntries = selectedEntries,
-                selectedDateTotal = selectedEntries.sumOf { it.amountMl },
+                selectedDay = DaySummary(selectedEntries),
+                month = MonthSummary.of(dailyTotals, settings.dailyGoalMl, settings.dailyGoalUpperMl),
+                isEntriesOpen = entriesOpen,
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HistoryUiState.Loading)
 
     /**
-     * When the day rolls into a new month, follow it — but only if the calendar was showing the
-     * month that was current until now. Someone browsing an older month stays where they are.
+     * When the day rolls over, follow it — but only if the calendar was showing the month that
+     * was current until now. Someone browsing an older month stays where they are, and so does
+     * a deliberately picked other day in the current month.
      */
-    private fun followMonthRollover() {
+    private fun followRollover() {
         viewModelScope.launch {
             var previous = todayProvider.today.value
             todayProvider.today.collect { today ->
-                val previousMonth = previous.monthYear()
+                val yesterday = previous
                 previous = today
-                if (_currentMonth.value == previousMonth && today.monthYear() != previousMonth) {
-                    _currentMonth.value = today.monthYear()
-                    _selectedDate.value = null
+                if (today == yesterday || _currentMonth.value != yesterday.monthYear()) return@collect
+                _currentMonth.value = today.monthYear()
+                val selected = _selectedDate.value
+                if (selected == yesterday || selected.monthYear() != today.monthYear()) {
+                    _selectedDate.value = today
                 }
             }
         }
     }
 
-    private data class MonthQuery(
+    private data class Query(
         val month: MonthYear,
-        val selectedDate: LocalDate?,
+        val selectedDate: LocalDate,
+        val entriesOpen: Boolean,
         val settings: Settings,
         val today: LocalDate,
     )
 
+    /**
+     * Moving month selects the new month's day nearest today: today itself in the current
+     * month, the last day of a past month, the first day of a future one.
+     */
     fun navigateMonth(delta: Int) {
-        _currentMonth.update { current ->
-            val monthOrdinal = current.month.ordinal + delta
-            val newYear = current.year + monthOrdinal.floorDiv(12)
-            val newMonth = Month.entries[((monthOrdinal % 12) + 12) % 12]
-            MonthYear(newYear, newMonth)
-        }
-        _selectedDate.value = null
+        val month = _currentMonth.value.plusMonths(delta)
+        _currentMonth.value = month
+        _selectedDate.value = nearestDay(todayProvider.today.value, month)
+        _entriesOpen.value = false
     }
 
+    /** There is always a selected day; tapping one moves the selection, never clears it. */
     fun selectDate(date: LocalDate) {
-        _selectedDate.value = if (_selectedDate.value == date) null else date
+        _selectedDate.value = date
+        _currentMonth.value = date.monthYear()
     }
 
+    fun goToToday() {
+        val today = todayProvider.today.value
+        _currentMonth.value = today.monthYear()
+        _selectedDate.value = today
+    }
+
+    fun showEntries() {
+        _entriesOpen.value = true
+    }
+
+    /** Closes the entries overlay; the day stays selected. */
     fun dismissDetail() {
-        _selectedDate.value = null
+        _entriesOpen.value = false
     }
 
     fun deleteEntry(entry: DrinkEntry) {
@@ -154,4 +157,8 @@ class HistoryViewModel @Inject constructor(
     }
 }
 
-private fun LocalDate.monthYear() = MonthYear(year, month)
+internal fun nearestDay(today: LocalDate, month: MonthYear): LocalDate = when {
+    today.monthYear() == month -> today
+    month.firstDay > today -> month.firstDay
+    else -> month.lastDay
+}
