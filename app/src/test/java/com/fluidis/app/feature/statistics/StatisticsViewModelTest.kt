@@ -7,6 +7,7 @@ import com.fluidis.app.core.model.ChartMode
 import com.fluidis.app.core.model.DailyTotal
 import com.fluidis.app.core.model.DrinkTypeTotal
 import com.fluidis.app.core.model.Settings
+import com.fluidis.app.core.time.FakeTodayProvider
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -17,6 +18,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.LocalDate
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -28,6 +30,7 @@ class StatisticsViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var dao: DrinkEntryDao
     private lateinit var settingsDataStore: SettingsDataStore
+    private val todayProvider = FakeTodayProvider(LocalDate(2026, 9, 21))
 
     @Before
     fun setup() {
@@ -58,7 +61,7 @@ class StatisticsViewModelTest {
 
     @Test
     fun `computes averages correctly`() = runTest {
-        val viewModel = StatisticsViewModel(dao, settingsDataStore)
+        val viewModel = StatisticsViewModel(dao, settingsDataStore, todayProvider)
 
         viewModel.uiState.test {
             awaitItem() // Loading
@@ -72,7 +75,7 @@ class StatisticsViewModelTest {
 
     @Test
     fun `default period is WEEK`() = runTest {
-        val viewModel = StatisticsViewModel(dao, settingsDataStore)
+        val viewModel = StatisticsViewModel(dao, settingsDataStore, todayProvider)
 
         viewModel.uiState.test {
             awaitItem() // Loading
@@ -83,8 +86,23 @@ class StatisticsViewModelTest {
     }
 
     @Test
+    fun `day rollover moves the range to end on the new day`() = runTest {
+        val viewModel = StatisticsViewModel(dao, settingsDataStore, todayProvider)
+
+        viewModel.uiState.test {
+            skipItems(2) // Loading, first Success
+            todayProvider.set(LocalDate(2026, 9, 22))
+            testDispatcher.scheduler.advanceUntilIdle()
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify { dao.getDailyTotalsInRange(any(), "2026-09-21") }
+        coVerify { dao.getDailyTotalsInRange(any(), "2026-09-22") }
+    }
+
+    @Test
     fun `setChartMode persists to DataStore`() = runTest {
-        val viewModel = StatisticsViewModel(dao, settingsDataStore)
+        val viewModel = StatisticsViewModel(dao, settingsDataStore, todayProvider)
         io.mockk.coEvery { settingsDataStore.updateSelectedChartMode(any()) } returns Unit
 
         viewModel.setChartMode(ChartMode.LINE)

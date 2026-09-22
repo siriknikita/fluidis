@@ -6,9 +6,9 @@ import com.fluidis.app.core.database.DrinkEntryDao
 import com.fluidis.app.core.datastore.SettingsDataStore
 import com.fluidis.app.core.model.DrinkEntry
 import com.fluidis.app.core.model.DrinkType
+import com.fluidis.app.core.time.TodayProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -16,27 +16,25 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayIn
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val drinkEntryDao: DrinkEntryDao,
     private val settingsDataStore: SettingsDataStore,
+    private val todayProvider: TodayProvider,
 ) : ViewModel() {
 
-    private fun currentDate(): String =
-        Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+    private val today: String get() = todayProvider.today.value.toString()
 
-    private val _today = MutableStateFlow(currentDate())
-
+    /** Re-read the clock before a write, so a tap just after midnight logs to the new day. */
     private fun refreshDate() {
-        _today.value = currentDate()
+        todayProvider.refresh()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val uiState: StateFlow<HomeUiState> = _today.flatMapLatest { date ->
+    val uiState: StateFlow<HomeUiState> = todayProvider.today.flatMapLatest { day ->
+        val date = day.toString()
         combine(
             drinkEntryDao.getEntriesForDate(date),
             drinkEntryDao.getTotalsPerDrinkForDate(date),
@@ -69,7 +67,7 @@ class HomeViewModel @Inject constructor(
                 DrinkEntry(
                     drinkType = drinkType.key,
                     amountMl = amountMl,
-                    date = _today.value,
+                    date = today,
                     createdAt = Clock.System.now().toEpochMilliseconds(),
                 )
             )
@@ -79,7 +77,7 @@ class HomeViewModel @Inject constructor(
     fun undoLastEntry(drinkType: DrinkType) {
         refreshDate()
         viewModelScope.launch {
-            val lastEntry = drinkEntryDao.getLastEntryForDrinkOnDate(_today.value, drinkType.key)
+            val lastEntry = drinkEntryDao.getLastEntryForDrinkOnDate(today, drinkType.key)
             if (lastEntry != null) {
                 drinkEntryDao.delete(lastEntry)
             }
@@ -89,7 +87,7 @@ class HomeViewModel @Inject constructor(
     fun clearAllEntries(drinkType: DrinkType) {
         refreshDate()
         viewModelScope.launch {
-            drinkEntryDao.deleteAllForDrinkOnDate(_today.value, drinkType.key)
+            drinkEntryDao.deleteAllForDrinkOnDate(today, drinkType.key)
         }
     }
 }

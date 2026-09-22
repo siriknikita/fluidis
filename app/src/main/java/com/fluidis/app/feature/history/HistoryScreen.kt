@@ -96,6 +96,7 @@ fun HistoryScreen(
                 ) {
                     CalendarView(
                         currentMonth = state.currentMonth,
+                        today = state.today,
                         datesWithEntries = state.datesWithEntries,
                         goalMl = state.goalMl,
                         goalUpperMl = state.goalUpperMl,

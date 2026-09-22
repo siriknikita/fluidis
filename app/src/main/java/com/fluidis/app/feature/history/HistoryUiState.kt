@@ -14,6 +14,7 @@ sealed interface HistoryUiState {
 
     data class Success(
         val currentMonth: MonthYear,
+        val today: LocalDate,
         val datesWithEntries: Map<LocalDate, DailyTotal>,
         val goalMl: Int,
         val goalUpperMl: Int?,

@@ -12,11 +12,16 @@ import androidx.compose.runtime.setValue
 import androidx.navigation.compose.rememberNavController
 import com.fluidis.app.core.navigation.FluidisNavHost
 import com.fluidis.app.core.theme.FluidisTheme
+import com.fluidis.app.core.time.TodayProvider
 import com.fluidis.app.core.ui.FluidisScaffold
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject lateinit var todayProvider: TodayProvider
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -48,5 +53,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    /** Coming back after midnight must show the new day, not the one the view models last saw. */
+    override fun onStart() {
+        super.onStart()
+        todayProvider.refresh()
     }
 }

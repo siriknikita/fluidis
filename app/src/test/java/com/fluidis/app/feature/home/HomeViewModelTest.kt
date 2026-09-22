@@ -7,6 +7,7 @@ import com.fluidis.app.core.model.DrinkEntry
 import com.fluidis.app.core.model.DrinkType
 import com.fluidis.app.core.model.DrinkTypeTotal
 import com.fluidis.app.core.model.Settings
+import com.fluidis.app.core.time.FakeTodayProvider
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -18,6 +19,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.LocalDate
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -32,6 +34,7 @@ class HomeViewModelTest {
     private lateinit var dao: DrinkEntryDao
     private lateinit var settingsDataStore: SettingsDataStore
     private lateinit var viewModel: HomeViewModel
+    private val todayProvider = FakeTodayProvider(LocalDate(2026, 9, 21))
 
     @Before
     fun setup() {
@@ -50,7 +53,7 @@ class HomeViewModelTest {
     }
 
     private fun createViewModel(): HomeViewModel {
-        return HomeViewModel(dao, settingsDataStore)
+        return HomeViewModel(dao, settingsDataStore, todayProvider)
     }
 
     @Test
@@ -98,6 +101,35 @@ class HomeViewModelTest {
             assertEquals(350, success.drinkTotals[DrinkType.TEA])
             cancelAndIgnoreRemainingEvents()
         }
+    }
+
+    @Test
+    fun `day rollover switches to the new day's entries`() = runTest {
+        val yesterday = DrinkEntry(1, "water", 500, "2026-09-21", 1000L)
+        every { dao.getEntriesForDate("2026-09-21") } returns flowOf(listOf(yesterday))
+        every { dao.getEntriesForDate("2026-09-22") } returns flowOf(emptyList())
+
+        viewModel = createViewModel()
+        viewModel.uiState.test {
+            awaitItem() // Loading
+            assertEquals(500, (awaitItem() as HomeUiState.Success).totalMl)
+
+            todayProvider.set(LocalDate(2026, 9, 22))
+            assertEquals(0, (awaitItem() as HomeUiState.Success).totalMl)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `addEntry logs to the provider's current day`() = runTest {
+        coEvery { dao.insert(any()) } returns 1L
+        viewModel = createViewModel()
+        todayProvider.set(LocalDate(2026, 9, 22))
+
+        viewModel.addEntry(DrinkType.WATER, 500)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify { dao.insert(match { it.date == "2026-09-22" }) }
     }
 
     @Test

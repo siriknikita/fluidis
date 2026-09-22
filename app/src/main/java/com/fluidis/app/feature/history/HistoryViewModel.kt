@@ -6,6 +6,8 @@ import com.fluidis.app.core.database.DrinkEntryDao
 import com.fluidis.app.core.datastore.SettingsDataStore
 import com.fluidis.app.core.model.DrinkEntry
 import com.fluidis.app.core.model.DrinkType
+import com.fluidis.app.core.model.Settings
+import com.fluidis.app.core.time.TodayProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,33 +22,33 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
-import kotlinx.datetime.todayIn
 import javax.inject.Inject
 
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
     private val drinkEntryDao: DrinkEntryDao,
     private val settingsDataStore: SettingsDataStore,
+    private val todayProvider: TodayProvider,
 ) : ViewModel() {
 
-    private val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
-
-    private val _currentMonth = MutableStateFlow(
-        MonthYear(today.year, today.month)
-    )
+    private val _currentMonth = MutableStateFlow(todayProvider.today.value.monthYear())
     private val _selectedDate = MutableStateFlow<LocalDate?>(null)
+
+    init {
+        followMonthRollover()
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<HistoryUiState> = combine(
         _currentMonth,
         _selectedDate,
         settingsDataStore.settings,
-    ) { month, selectedDate, settings ->
-        Triple(month, selectedDate, settings)
-    }.flatMapLatest { (month, selectedDate, settings) ->
+        todayProvider.today,
+    ) { month, selectedDate, settings, today ->
+        MonthQuery(month, selectedDate, settings, today)
+    }.flatMapLatest { (month, selectedDate, settings, today) ->
         val goalMl = settings.dailyGoalMl
         val firstDay = LocalDate(month.year, month.month, 1)
         val lastDay = firstDay.plus(1, DateTimeUnit.MONTH).minus(1, DateTimeUnit.DAY)
@@ -66,6 +68,7 @@ class HistoryViewModel @Inject constructor(
             }
             HistoryUiState.Success(
                 currentMonth = month,
+                today = today,
                 datesWithEntries = datesMap,
                 goalMl = goalMl,
                 goalUpperMl = settings.dailyGoalUpperMl,
@@ -75,6 +78,31 @@ class HistoryViewModel @Inject constructor(
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HistoryUiState.Loading)
+
+    /**
+     * When the day rolls into a new month, follow it — but only if the calendar was showing the
+     * month that was current until now. Someone browsing an older month stays where they are.
+     */
+    private fun followMonthRollover() {
+        viewModelScope.launch {
+            var previous = todayProvider.today.value
+            todayProvider.today.collect { today ->
+                val previousMonth = previous.monthYear()
+                previous = today
+                if (_currentMonth.value == previousMonth && today.monthYear() != previousMonth) {
+                    _currentMonth.value = today.monthYear()
+                    _selectedDate.value = null
+                }
+            }
+        }
+    }
+
+    private data class MonthQuery(
+        val month: MonthYear,
+        val selectedDate: LocalDate?,
+        val settings: Settings,
+        val today: LocalDate,
+    )
 
     fun navigateMonth(delta: Int) {
         _currentMonth.update { current ->
@@ -125,3 +153,5 @@ class HistoryViewModel @Inject constructor(
         }
     }
 }
+
+private fun LocalDate.monthYear() = MonthYear(year, month)

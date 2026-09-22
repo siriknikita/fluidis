@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.fluidis.app.core.database.DrinkEntryDao
 import com.fluidis.app.core.datastore.SettingsDataStore
 import com.fluidis.app.core.model.ChartMode
+import com.fluidis.app.core.time.TodayProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,12 +15,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
-import kotlinx.datetime.todayIn
 import com.fluidis.app.core.ui.DatePeriods
 import javax.inject.Inject
 
@@ -27,6 +25,7 @@ import javax.inject.Inject
 class StatisticsViewModel @Inject constructor(
     private val drinkEntryDao: DrinkEntryDao,
     private val settingsDataStore: SettingsDataStore,
+    private val todayProvider: TodayProvider,
 ) : ViewModel() {
 
     private val _period = MutableStateFlow(StatsPeriod.WEEK)
@@ -35,8 +34,9 @@ class StatisticsViewModel @Inject constructor(
     val uiState: StateFlow<StatisticsUiState> = combine(
         _period,
         settingsDataStore.settings,
-    ) { period, settings ->
-        Triple(period, settings, dateRangeFor(period, settings.analyticsStartDate))
+        todayProvider.today,
+    ) { period, settings, today ->
+        Triple(period, settings, dateRangeFor(period, settings.analyticsStartDate, today))
     }.flatMapLatest { (period, settings, range) ->
         val (startDate, endDate) = range
         combine(
@@ -76,8 +76,11 @@ class StatisticsViewModel @Inject constructor(
         }
     }
 
-    private fun dateRangeFor(period: StatsPeriod, analyticsStartDate: LocalDate?): Pair<String, String> {
-        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+    private fun dateRangeFor(
+        period: StatsPeriod,
+        analyticsStartDate: LocalDate?,
+        today: LocalDate,
+    ): Pair<String, String> {
         val start = when (period) {
             StatsPeriod.WEEK -> today.minus(DatePeriods.WEEK_OFFSET_DAYS, DateTimeUnit.DAY)
             StatsPeriod.MONTH -> today.minus(DatePeriods.MONTH_OFFSET_DAYS, DateTimeUnit.DAY)

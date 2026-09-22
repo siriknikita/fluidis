@@ -31,16 +31,14 @@ import com.fluidis.app.core.theme.DotBelowGoal
 import com.fluidis.app.core.theme.DotGoalMet
 import com.fluidis.app.core.theme.DotOverUpper
 import com.fluidis.app.feature.history.MonthYear
-import kotlinx.datetime.Clock
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayIn
 import java.time.YearMonth
 
 @Composable
 fun CalendarView(
     currentMonth: MonthYear,
+    today: LocalDate,
     datesWithEntries: Map<LocalDate, DailyTotal>,
     goalMl: Int,
     goalUpperMl: Int?,
@@ -50,7 +48,6 @@ fun CalendarView(
     onNextMonth: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
     val firstDayOfMonth = remember(currentMonth) {
         LocalDate(currentMonth.year, currentMonth.month, 1)
     }
