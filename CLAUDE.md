@@ -49,9 +49,9 @@ app/src/main/java/com/fluidis/app/
     ├── home/                      # Main tracking screen
     │   └── components/            # DrinkCard, DailySummary, CustomAmountDialog
     ├── statistics/                # Charts and analytics
-    │   └── components/            # IntakeChart, AveragesCard, DrinkBreakdownCard
+    │   └── components/            # TrendCard, IntakeChart, DrinkMixCard, WeekdayPatternCard
     ├── history/                   # Calendar and entry editing
-    │   └── components/            # CalendarView, DayDetailSheet, EditEntryDialog
+    │   └── components/            # CalendarView, DayDetailCard, MonthSummaryCard, DayDetailPanel
     └── settings/                  # App settings
         └── components/            # GoalSetting, ServingSizeSetting
 ```
@@ -73,7 +73,9 @@ app/src/main/java/com/fluidis/app/
 - **Minus button**: Undo-style — removes last entry, shows snackbar with UNDO
 - **Custom amount**: Long-press + opens dialog with number input
 - **Charts**: Single chart area with dropdown to switch 4 modes (bar, stacked bar, line, area)
-- **Calendar**: Color-coded dots (green = goal met, orange = below goal)
+- **Calendar**: A progress ring per logged day (fill = share of goal; green = met, orange = below, amber = over the upper bound). A day is always selected (today by default) and summarised per drink in a card below; the slide-up panel is only the entry list
+- **History vs Statistics**: History answers "what happened" (a day, a month); Statistics answers "what are my patterns" (the period vs the one before, rolling average, drink-mix shift, weekday habit). Don't duplicate one in the other
+- **Goal classification**: `GoalStatus.of(...)` is the single below / met / over rule — rings, donut and summaries all use it
 - **Analytics start date**: Auto-detected from first entry, overridable in settings
 
 ## Data Model
