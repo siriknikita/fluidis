@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.fluidis.app.core.model.DailyDrinkTotal
 import com.fluidis.app.core.model.DrinkEntry
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -89,6 +90,25 @@ class DrinkEntryDaoTest {
         assertEquals(2, totals.size)
         assertEquals(1000, totals[0].total)
         assertEquals(1000, totals[1].total)
+    }
+
+    @Test
+    fun dailyDrinkTotalsInRange() = runTest {
+        dao.insert(entry(date = "2026-04-10", amountMl = 1000))
+        dao.insert(entry(date = "2026-04-11", amountMl = 500))
+        dao.insert(entry(date = "2026-04-11", amountMl = 250))
+        dao.insert(entry(date = "2026-04-11", drinkType = "tea", amountMl = 350))
+        dao.insert(entry(date = "2026-04-12", amountMl = 2000))
+
+        val totals = dao.getDailyDrinkTotalsInRange("2026-04-10", "2026-04-11").first()
+        assertEquals(
+            listOf(
+                DailyDrinkTotal("2026-04-10", "water", 1000),
+                DailyDrinkTotal("2026-04-11", "tea", 350),
+                DailyDrinkTotal("2026-04-11", "water", 750),
+            ),
+            totals,
+        )
     }
 
     @Test

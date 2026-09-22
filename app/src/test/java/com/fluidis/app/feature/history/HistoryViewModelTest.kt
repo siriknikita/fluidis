@@ -23,7 +23,8 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -54,22 +55,24 @@ class HistoryViewModelTest {
     }
 
     @Test
-    fun `initial state shows current month`() = runTest {
+    fun `today is selected initially`() = runTest {
         val viewModel = HistoryViewModel(dao, settingsDataStore, todayProvider)
 
         viewModel.uiState.test {
             awaitItem() // Loading
             val success = awaitItem() as HistoryUiState.Success
-            assertNull(success.selectedDate)
+            assertEquals(LocalDate(2026, 9, 30), success.selectedDate)
+            assertFalse(success.isEntriesOpen)
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
-    fun `selectDate toggles selection`() = runTest {
+    fun `selecting a date again keeps it selected`() = runTest {
         val viewModel = HistoryViewModel(dao, settingsDataStore, todayProvider)
-        val date = LocalDate(2026, 4, 11)
+        val date = LocalDate(2026, 9, 11)
 
+        viewModel.selectDate(date)
         viewModel.selectDate(date)
         viewModel.uiState.test {
             skipItems(1) // Loading
@@ -80,9 +83,105 @@ class HistoryViewModelTest {
     }
 
     @Test
+    fun `navigating months selects the day nearest today`() = runTest {
+        val viewModel = HistoryViewModel(dao, settingsDataStore, todayProvider)
+
+        viewModel.uiState.test {
+            skipItems(1) // Loading
+            awaitItem()
+
+            viewModel.navigateMonth(-1)
+            val past = expectMostRecentItemAfterIdle() as HistoryUiState.Success
+            assertEquals(MonthYear(2026, Month.AUGUST), past.currentMonth)
+            assertEquals(LocalDate(2026, 8, 31), past.selectedDate)
+
+            viewModel.navigateMonth(2)
+            val future = expectMostRecentItemAfterIdle() as HistoryUiState.Success
+            assertEquals(LocalDate(2026, 10, 1), future.selectedDate)
+
+            viewModel.goToToday()
+            val back = expectMostRecentItemAfterIdle() as HistoryUiState.Success
+            assertEquals(MonthYear(2026, Month.SEPTEMBER), back.currentMonth)
+            assertEquals(LocalDate(2026, 9, 30), back.selectedDate)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `the selected day is broken down per drink`() = runTest {
+        every { dao.getEntriesForDate("2026-09-30") } returns flowOf(
+            listOf(
+                DrinkEntry(1, "water", 500, "2026-09-30", 3L),
+                DrinkEntry(2, "water", 400, "2026-09-30", 2L),
+                DrinkEntry(3, "coffee", 200, "2026-09-30", 1L),
+            )
+        )
+        val viewModel = HistoryViewModel(dao, settingsDataStore, todayProvider)
+
+        viewModel.uiState.test {
+            skipItems(1) // Loading
+            val day = (awaitItem() as HistoryUiState.Success).selectedDay
+            assertEquals(1100, day.totalMl)
+            assertEquals(DrinkType.entries, day.drinks.map { it.drinkType })
+            assertEquals(listOf(900, 0, 200), day.drinks.map { it.totalMl })
+            assertEquals(listOf(2, 0, 1), day.drinks.map { it.servings })
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `showing and dismissing entries keeps the day selected`() = runTest {
+        val viewModel = HistoryViewModel(dao, settingsDataStore, todayProvider)
+        viewModel.uiState.test {
+            skipItems(1) // Loading
+            awaitItem()
+
+            viewModel.showEntries()
+            assertTrue((expectMostRecentItemAfterIdle() as HistoryUiState.Success).isEntriesOpen)
+
+            viewModel.dismissDetail()
+            val closed = expectMostRecentItemAfterIdle() as HistoryUiState.Success
+            assertFalse(closed.isEntriesOpen)
+            assertEquals(LocalDate(2026, 9, 30), closed.selectedDate)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a day rollover moves a today selection along`() = runTest {
+        val today = FakeTodayProvider(LocalDate(2026, 9, 21))
+        val viewModel = HistoryViewModel(dao, settingsDataStore, today)
+
+        viewModel.uiState.test {
+            skipItems(1) // Loading
+            awaitItem()
+            today.set(LocalDate(2026, 9, 22))
+            val state = expectMostRecentItemAfterIdle() as HistoryUiState.Success
+            assertEquals(LocalDate(2026, 9, 22), state.selectedDate)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a day rollover keeps a deliberately picked day`() = runTest {
+        val today = FakeTodayProvider(LocalDate(2026, 9, 21))
+        val viewModel = HistoryViewModel(dao, settingsDataStore, today)
+        viewModel.selectDate(LocalDate(2026, 9, 10))
+
+        viewModel.uiState.test {
+            skipItems(1) // Loading
+            awaitItem()
+            today.set(LocalDate(2026, 9, 22))
+            val state = expectMostRecentItemAfterIdle() as HistoryUiState.Success
+            assertEquals(LocalDate(2026, 9, 10), state.selectedDate)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
     fun `month rollover moves the calendar to the new month`() = runTest {
         val viewModel = HistoryViewModel(dao, settingsDataStore, todayProvider)
-        viewModel.selectDate(LocalDate(2026, 9, 30))
+        viewModel.selectDate(LocalDate(2026, 9, 12))
 
         viewModel.uiState.test {
             skipItems(1) // Loading
@@ -92,7 +191,7 @@ class HistoryViewModelTest {
             val rolled = expectMostRecentItemAfterIdle() as HistoryUiState.Success
             assertEquals(MonthYear(2026, Month.OCTOBER), rolled.currentMonth)
             assertEquals(LocalDate(2026, 10, 1), rolled.today)
-            assertNull(rolled.selectedDate)
+            assertEquals(LocalDate(2026, 10, 1), rolled.selectedDate)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -109,6 +208,7 @@ class HistoryViewModelTest {
             todayProvider.set(LocalDate(2026, 10, 1))
             val state = expectMostRecentItemAfterIdle() as HistoryUiState.Success
             assertEquals(MonthYear(2026, Month.JULY), state.currentMonth)
+            assertEquals(LocalDate(2026, 7, 31), state.selectedDate)
             assertEquals(LocalDate(2026, 10, 1), state.today)
             cancelAndIgnoreRemainingEvents()
         }

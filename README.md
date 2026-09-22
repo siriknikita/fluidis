@@ -6,8 +6,8 @@ A personal hydration tracking Android app built with Kotlin and Jetpack Compose.
 
 - **Quick tracking** — Tap to add default servings, long-press for custom amounts, hold minus to rapid-remove
 - **Water drop progress** — Animated Canvas-based fill indicator with gradient transitions (blue -> gold/green on goal met -> amber on upper bound exceeded)
-- **Statistics** — Four chart modes (bar, stacked bar, line, area) with period selection (week, month, all-time), averages, and drink breakdown
-- **Calendar history** — Month view with color-coded goal dots, slide-up detail panel for viewing/editing/adding entries per day
+- **Statistics** — Patterns rather than a second calendar: the period (week / month / all-time) against the one before it, a daily chart in four modes (bar, stacked by drink, line, area) with a 7-day rolling average, how the drink mix shifted, and your weekday habits across all history
+- **Calendar history** — Month grid with a goal-progress ring on every logged day, an inline card breaking the selected day down by drink, a month summary (goal donut, average, total), and a slide-up panel for viewing/editing/adding entries
 - **Goal ranges** — Set a daily goal with an optional upper bound for balanced hydration
 - **Per-drink limits** — Configure maximum daily servings per drink type
 - **Settings** — Configurable daily goal (single or range), serving sizes, daily limits, analytics start date
@@ -78,9 +78,9 @@ app/src/main/java/com/fluidis/app/
     ├── home/                          # Main tracking screen
     │   └── components/                # WaterDropIndicator, DrinkCard, CustomAmountDialog
     ├── statistics/                    # Charts and analytics
-    │   └── components/                # IntakeChart, ChartModeSelector, AveragesCard, DrinkBreakdownCard
+    │   └── components/                # TrendCard, IntakeChart, DrinkMixCard, WeekdayPatternCard
     ├── history/                       # Calendar and entry management
-    │   └── components/                # CalendarView, DayDetailPanel, EditEntryDialog, GoalDonutChart
+    │   └── components/                # CalendarView, DayDetailCard, MonthSummaryCard, DayDetailPanel
     └── settings/                      # App preferences
         └── components/                # GoalSettingDialog, ServingSizeSetting, MaxServingsDialog
 ```
