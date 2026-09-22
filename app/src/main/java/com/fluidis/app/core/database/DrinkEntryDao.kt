@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
+import com.fluidis.app.core.model.DailyDrinkTotal
 import com.fluidis.app.core.model.DailyTotal
 import com.fluidis.app.core.model.DrinkEntry
 import com.fluidis.app.core.model.DrinkTypeTotal
@@ -48,6 +49,18 @@ interface DrinkEntryDao {
         """
     )
     fun getDailyTotalsInRange(startDate: String, endDate: String): Flow<List<DailyTotal>>
+
+    /** Per-day, per-drink totals — one fetch the whole Statistics screen is computed from. */
+    @Query(
+        """
+        SELECT date, drinkType, COALESCE(SUM(amountMl), 0) AS total
+        FROM drink_entries
+        WHERE date BETWEEN :startDate AND :endDate
+        GROUP BY date, drinkType
+        ORDER BY date, drinkType
+        """
+    )
+    fun getDailyDrinkTotalsInRange(startDate: String, endDate: String): Flow<List<DailyDrinkTotal>>
 
     @Query(
         """
