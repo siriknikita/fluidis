@@ -1,6 +1,15 @@
 package com.fluidis.app.feature.statistics.components
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -34,9 +43,18 @@ import com.fluidis.app.core.model.DrinkType
 import com.fluidis.app.core.theme.GoalGreen
 import com.fluidis.app.core.ui.ChartDefaults
 
+/**
+ * Daily intake, drawn four ways. The goal line (or the shaded band, when a range is set) sits
+ * behind whichever series is selected, and a 7-day rolling average is drawn over it — daily
+ * totals jump around, and the average is what shows which way things are actually heading.
+ */
 @Composable
 fun IntakeChart(
     dailyTotals: List<DailyTotal>,
+    /** Index-aligned with [dailyTotals]. */
+    rollingAverage: List<Int>,
+    /** Each day's intake split by drink, keyed by ISO date, for the stacked mode. */
+    drinkSplits: Map<String, Map<DrinkType, Int>>,
     goalMl: Int,
     goalUpperMl: Int?,
     chartMode: ChartMode,
@@ -47,6 +65,8 @@ fun IntakeChart(
     val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
     val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
     val goalLineColor = MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
+    val averageColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f)
+    val haloColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
     val textMeasurer = rememberTextMeasurer()
     val labelStyle = MaterialTheme.typography.labelSmall.copy(
         color = onSurfaceVariant,
@@ -134,13 +154,13 @@ fun IntakeChart(
                         )
                     }
 
-                    when (chartMode) {
+                    val xs = when (chartMode) {
                         ChartMode.BAR -> drawBarChart(
                             dailyTotals, maxValue, chartWidth, chartHeight,
                             leftPadding, primaryColor, surfaceVariant,
                         )
                         ChartMode.STACKED_BAR -> drawStackedBarChart(
-                            dailyTotals, maxValue, chartWidth, chartHeight,
+                            dailyTotals, drinkSplits, maxValue, chartWidth, chartHeight,
                             leftPadding,
                         )
                         ChartMode.LINE -> drawLineChart(
@@ -152,7 +172,18 @@ fun IntakeChart(
                             leftPadding, primaryColor, filled = true,
                         )
                     }
+                    val averagePoints = xs.zip(rollingAverage) { x, average ->
+                        Offset(x, chartHeight * (1f - average.toFloat() / maxValue))
+                    }
+                    drawAverage(averagePoints, averageColor, haloColor)
                 }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                ChartLegend(
+                    showDrinks = chartMode == ChartMode.STACKED_BAR,
+                    showAverage = rollingAverage.size >= 2,
+                    averageColor = averageColor,
+                )
             }
         }
     }
@@ -166,11 +197,11 @@ private fun DrawScope.drawBarChart(
     leftPadding: Float,
     barColor: Color,
     trackColor: Color,
-) {
+): List<Float> {
     val barWidth = (chartWidth / dailyTotals.size) * ChartDefaults.BAR_WIDTH_FRACTION
     val gap = (chartWidth / dailyTotals.size) * ChartDefaults.GAP_FRACTION
 
-    dailyTotals.forEachIndexed { index, daily ->
+    return dailyTotals.mapIndexed { index, daily ->
         val x = leftPadding + index * (barWidth + gap) + gap / 2
         val barHeight = chartHeight * (daily.total.toFloat() / maxValue)
         val y = chartHeight - barHeight
@@ -181,44 +212,48 @@ private fun DrawScope.drawBarChart(
             size = Size(barWidth, barHeight),
             cornerRadius = CornerRadius(ChartDefaults.BAR_CORNER_RADIUS, ChartDefaults.BAR_CORNER_RADIUS),
         )
+        x + barWidth / 2
     }
 }
 
+/** Returns the x centre of each bar, where the rolling average is plotted. */
 private fun DrawScope.drawStackedBarChart(
     dailyTotals: List<DailyTotal>,
+    drinkSplits: Map<String, Map<DrinkType, Int>>,
     maxValue: Int,
     chartWidth: Float,
     chartHeight: Float,
     leftPadding: Float,
-) {
+): List<Float> {
     val barWidth = (chartWidth / dailyTotals.size) * ChartDefaults.BAR_WIDTH_FRACTION
     val gap = (chartWidth / dailyTotals.size) * ChartDefaults.GAP_FRACTION
-    val colors = DrinkType.entries.map { it.color }
 
-    dailyTotals.forEachIndexed { index, daily ->
+    return dailyTotals.mapIndexed { index, daily ->
         val x = leftPadding + index * (barWidth + gap) + gap / 2
         val totalHeight = chartHeight * (daily.total.toFloat() / maxValue)
 
-        // Split into proportional segments based on drink type count
-        val segmentCount = colors.size
-        val segmentHeight = totalHeight / segmentCount
+        // Each drink's real share of the day, in declaration order from the bottom. Rows for
+        // drinks this build doesn't know are in the total but not the split, so the bands are
+        // scaled to the known part and the stack still reaches the day's total.
+        val split = drinkSplits[daily.date].orEmpty()
+        val knownTotal = split.values.sum()
+        val bands = DrinkType.entries.mapNotNull { type ->
+            val ml = split[type] ?: 0
+            if (ml > 0 && knownTotal > 0) type.color to totalHeight * ml / knownTotal else null
+        }
 
         var currentY = chartHeight
-
-        colors.forEachIndexed { colorIndex, color ->
-            val h = if (colorIndex == segmentCount - 1) {
-                chartHeight - (chartHeight - totalHeight) - (segmentHeight * colorIndex)
-            } else {
-                segmentHeight
-            }
-            currentY -= h
+        bands.forEachIndexed { bandIndex, (color, height) ->
+            currentY -= height
+            val isTop = bandIndex == bands.lastIndex
             drawRoundRect(
                 color = color,
                 topLeft = Offset(x, currentY),
-                size = Size(barWidth, h),
-                cornerRadius = if (colorIndex == segmentCount - 1) CornerRadius(ChartDefaults.BAR_CORNER_RADIUS) else CornerRadius.Zero,
+                size = Size(barWidth, height),
+                cornerRadius = if (isTop) CornerRadius(ChartDefaults.BAR_CORNER_RADIUS) else CornerRadius.Zero,
             )
         }
+        x + barWidth / 2
     }
 }
 
@@ -230,8 +265,8 @@ private fun DrawScope.drawLineChart(
     leftPadding: Float,
     lineColor: Color,
     filled: Boolean,
-) {
-    if (dailyTotals.size < 2) return
+): List<Float> {
+    if (dailyTotals.size < 2) return emptyList()
 
     val stepX = chartWidth / (dailyTotals.size - 1).coerceAtLeast(1)
 
@@ -272,5 +307,59 @@ private fun DrawScope.drawLineChart(
     // Draw dots
     points.forEach { point ->
         drawCircle(color = lineColor, radius = ChartDefaults.DOT_RADIUS, center = point)
+    }
+    return points.map { it.x }
+}
+
+private fun DrawScope.drawAverage(points: List<Offset>, color: Color, halo: Color) {
+    if (points.size < 2) return
+    val path = Path().apply {
+        points.forEachIndexed { index, point ->
+            if (index == 0) moveTo(point.x, point.y) else lineTo(point.x, point.y)
+        }
+    }
+    // A halo first, so the line stays legible where it crosses bars of any colour.
+    drawPath(path, halo, style = Stroke(width = AVERAGE_WIDTH + 6f, cap = StrokeCap.Round, join = StrokeJoin.Round))
+    drawPath(path, color, style = Stroke(width = AVERAGE_WIDTH, cap = StrokeCap.Round, join = StrokeJoin.Round))
+}
+
+private const val AVERAGE_WIDTH = 5f
+
+@Composable
+private fun ChartLegend(showDrinks: Boolean, showAverage: Boolean, averageColor: Color) {
+    if (!showDrinks && !showAverage) return
+    val labelStyle = MaterialTheme.typography.labelSmall
+    val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (showDrinks) {
+            DrinkType.entries.forEach { type ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(type.color),
+                    )
+                    Spacer(modifier = Modifier.width(5.dp))
+                    Text(type.displayName, style = labelStyle, color = labelColor)
+                }
+            }
+        }
+        if (showAverage) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .width(14.dp)
+                        .height(3.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(averageColor),
+                )
+                Spacer(modifier = Modifier.width(5.dp))
+                Text("7-day average", style = labelStyle, color = labelColor)
+            }
+        }
     }
 }

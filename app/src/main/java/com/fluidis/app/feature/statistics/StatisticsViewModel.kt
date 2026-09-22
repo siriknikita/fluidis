@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
@@ -36,32 +37,35 @@ class StatisticsViewModel @Inject constructor(
         settingsDataStore.settings,
         todayProvider.today,
     ) { period, settings, today ->
-        Triple(period, settings, dateRangeFor(period, settings.analyticsStartDate, today))
-    }.flatMapLatest { (period, settings, range) ->
-        val (startDate, endDate) = range
-        combine(
-            drinkEntryDao.getDailyTotalsInRange(startDate, endDate),
-            drinkEntryDao.getTotalsPerDrinkInRange(startDate, endDate),
-        ) { dailyTotals, drinkBreakdown ->
-            val daysTracked = dailyTotals.size
-            val totalMl = dailyTotals.sumOf { it.total }
-            val averageMl = if (daysTracked > 0) totalMl / daysTracked else 0
-            val daysGoalMet = dailyTotals.count { it.total >= settings.dailyGoalMl }
-            val daysOverUpper = if (settings.hasGoalRange) {
-                dailyTotals.count { it.total > settings.effectiveUpperMl }
-            } else 0
+        Triple(period, settings, today)
+    }.flatMapLatest { (period, settings, today) ->
+        val current = daysFor(period, settings.analyticsStartDate, today)
+        val previous = previousDays(period, current)
+        val allTime = daysFor(StatsPeriod.ALL_TIME, settings.analyticsStartDate, today)
 
+        // One fetch covers every section: all time, the comparison period, and the six days
+        // before the period that the first points of the rolling average reach back into.
+        val fetchStart = listOfNotNull(
+            allTime.start,
+            previous?.start,
+            current.start.minus(StatisticsReport.ROLLING_WINDOW - 1, DateTimeUnit.DAY),
+        ).min()
+
+        drinkEntryDao.getDailyDrinkTotalsInRange(fetchStart.toString(), today.toString()).map { rows ->
             StatisticsUiState.Success(
                 period = period,
                 chartMode = settings.selectedChartMode,
-                dailyTotals = dailyTotals,
-                drinkBreakdown = drinkBreakdown,
-                averageMl = averageMl,
-                daysTracked = daysTracked,
-                daysGoalMet = daysGoalMet,
                 goalMl = settings.dailyGoalMl,
                 goalUpperMl = settings.dailyGoalUpperMl,
-                daysOverUpper = daysOverUpper,
+                report = StatisticsReport.build(
+                    period = period,
+                    current = current,
+                    previous = previous,
+                    allTime = allTime,
+                    rows = rows,
+                    goalMl = settings.dailyGoalMl,
+                    upperMl = settings.dailyGoalUpperMl,
+                ),
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StatisticsUiState.Loading)
@@ -76,16 +80,35 @@ class StatisticsViewModel @Inject constructor(
         }
     }
 
-    private fun dateRangeFor(
-        period: StatsPeriod,
-        analyticsStartDate: LocalDate?,
-        today: LocalDate,
-    ): Pair<String, String> {
-        val start = when (period) {
-            StatsPeriod.WEEK -> today.minus(DatePeriods.WEEK_OFFSET_DAYS, DateTimeUnit.DAY)
-            StatsPeriod.MONTH -> today.minus(DatePeriods.MONTH_OFFSET_DAYS, DateTimeUnit.DAY)
-            StatsPeriod.ALL_TIME -> analyticsStartDate ?: today.minus(DatePeriods.DEFAULT_ALL_TIME_DAYS, DateTimeUnit.DAY)
+    companion object {
+        /**
+         * Week and month are rolling windows ending today. All time starts at the configured
+         * analytics start date, or a year back when none has been set or detected.
+         */
+        fun daysFor(
+            period: StatsPeriod,
+            analyticsStartDate: LocalDate?,
+            today: LocalDate,
+        ): ClosedRange<LocalDate> {
+            val start = when (period) {
+                StatsPeriod.WEEK -> today.minus(DatePeriods.WEEK_OFFSET_DAYS, DateTimeUnit.DAY)
+                StatsPeriod.MONTH -> today.minus(DatePeriods.MONTH_OFFSET_DAYS, DateTimeUnit.DAY)
+                StatsPeriod.ALL_TIME ->
+                    analyticsStartDate ?: today.minus(DatePeriods.DEFAULT_ALL_TIME_DAYS, DateTimeUnit.DAY)
+            }
+            // A start date set in the future would make an empty, inverted range.
+            return minOf(start, today)..today
         }
-        return start.toString() to today.toString()
+
+        /** The same-length window ending the day before [current]. All time has none. */
+        fun previousDays(period: StatsPeriod, current: ClosedRange<LocalDate>): ClosedRange<LocalDate>? {
+            val length = when (period) {
+                StatsPeriod.WEEK -> DatePeriods.WEEK_OFFSET_DAYS + 1
+                StatsPeriod.MONTH -> DatePeriods.MONTH_OFFSET_DAYS + 1
+                StatsPeriod.ALL_TIME -> return null
+            }
+            val end = current.start.minus(1, DateTimeUnit.DAY)
+            return end.minus(length - 1, DateTimeUnit.DAY)..end
+        }
     }
 }

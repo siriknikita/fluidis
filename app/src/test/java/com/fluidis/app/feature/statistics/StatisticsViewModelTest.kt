@@ -4,8 +4,7 @@ import app.cash.turbine.test
 import com.fluidis.app.core.database.DrinkEntryDao
 import com.fluidis.app.core.datastore.SettingsDataStore
 import com.fluidis.app.core.model.ChartMode
-import com.fluidis.app.core.model.DailyTotal
-import com.fluidis.app.core.model.DrinkTypeTotal
+import com.fluidis.app.core.model.DailyDrinkTotal
 import com.fluidis.app.core.model.Settings
 import com.fluidis.app.core.time.FakeTodayProvider
 import io.mockk.coVerify
@@ -21,6 +20,7 @@ import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDate
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
@@ -39,17 +39,13 @@ class StatisticsViewModelTest {
         settingsDataStore = mockk()
 
         every { settingsDataStore.settings } returns flowOf(Settings())
-        every { dao.getDailyTotalsInRange(any(), any()) } returns flowOf(
+        every { dao.getDailyDrinkTotalsInRange(any(), any()) } returns flowOf(
             listOf(
-                DailyTotal("2026-04-10", 1500),
-                DailyTotal("2026-04-11", 2200),
-            )
-        )
-        every { dao.getTotalsPerDrinkInRange(any(), any()) } returns flowOf(
-            listOf(
-                DrinkTypeTotal("water", 2000),
-                DrinkTypeTotal("tea", 700),
-                DrinkTypeTotal("coffee", 1000),
+                DailyDrinkTotal("2026-09-10", "water", 2000), // the previous week
+                DailyDrinkTotal("2026-09-11", "water", 1000),
+                DailyDrinkTotal("2026-09-20", "water", 1000),
+                DailyDrinkTotal("2026-09-20", "tea", 500),
+                DailyDrinkTotal("2026-09-21", "water", 2200),
             )
         )
     }
@@ -60,17 +56,31 @@ class StatisticsViewModelTest {
     }
 
     @Test
-    fun `computes averages correctly`() = runTest {
+    fun `compares the week with the week before`() = runTest {
         val viewModel = StatisticsViewModel(dao, settingsDataStore, todayProvider)
 
         viewModel.uiState.test {
             awaitItem() // Loading
-            val success = awaitItem() as StatisticsUiState.Success
-            assertEquals(1850, success.averageMl) // (1500 + 2200) / 2
-            assertEquals(2, success.daysTracked)
-            assertEquals(1, success.daysGoalMet) // only 2200 >= 2000
+            val trend = (awaitItem() as StatisticsUiState.Success).report.trend
+            assertEquals(1850, trend.current.averageMl) // (1500 + 2200) / 2
+            assertEquals(2, trend.current.daysTracked)
+            assertEquals(1, trend.current.metDays) // only 2200 >= 2000
+            assertEquals(1500, trend.previous?.averageMl)
+            assertEquals(1, trend.previous?.metDays)
             cancelAndIgnoreRemainingEvents()
         }
+    }
+
+    @Test
+    fun `week range is seven days ending today, compared with the seven before`() {
+        val today = LocalDate(2026, 9, 22)
+        val week = StatisticsViewModel.daysFor(StatsPeriod.WEEK, null, today)
+        assertEquals(LocalDate(2026, 9, 16)..today, week)
+        assertEquals(
+            LocalDate(2026, 9, 9)..LocalDate(2026, 9, 15),
+            StatisticsViewModel.previousDays(StatsPeriod.WEEK, week),
+        )
+        assertNull(StatisticsViewModel.previousDays(StatsPeriod.ALL_TIME, week))
     }
 
     @Test
@@ -96,8 +106,8 @@ class StatisticsViewModelTest {
             cancelAndIgnoreRemainingEvents()
         }
 
-        coVerify { dao.getDailyTotalsInRange(any(), "2026-09-21") }
-        coVerify { dao.getDailyTotalsInRange(any(), "2026-09-22") }
+        coVerify { dao.getDailyDrinkTotalsInRange(any(), "2026-09-21") }
+        coVerify { dao.getDailyDrinkTotalsInRange(any(), "2026-09-22") }
     }
 
     @Test

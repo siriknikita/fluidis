@@ -12,6 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -23,9 +24,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.fluidis.app.feature.statistics.components.AveragesCard
-import com.fluidis.app.feature.statistics.components.DrinkBreakdownCard
+import com.fluidis.app.feature.statistics.components.DrinkMixCard
 import com.fluidis.app.feature.statistics.components.IntakeChart
+import com.fluidis.app.feature.statistics.components.TrendCard
+import com.fluidis.app.feature.statistics.components.WeekdayPatternCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,29 +69,38 @@ fun StatisticsScreen(
                     }
                 }
 
+                val report = state.report
+                TrendCard(
+                    period = state.period,
+                    trend = report.trend,
+                    hasGoalRange = (state.goalUpperMl ?: 0) > state.goalMl,
+                )
+
                 IntakeChart(
-                    dailyTotals = state.dailyTotals,
+                    dailyTotals = report.dailyTotals,
+                    rollingAverage = report.rollingAverage,
+                    drinkSplits = report.drinkSplits,
                     goalMl = state.goalMl,
                     goalUpperMl = state.goalUpperMl,
                     chartMode = state.chartMode,
                     onChartModeChange = viewModel::setChartMode,
                 )
 
-                AveragesCard(
-                    averageMl = state.averageMl,
-                    daysTracked = state.daysTracked,
-                    daysGoalMet = state.daysGoalMet,
-                    goalMl = state.goalMl,
-                    goalUpperMl = state.goalUpperMl,
-                    daysOverUpper = state.daysOverUpper,
-                )
+                DrinkMixCard(mix = report.mix)
 
-                DrinkBreakdownCard(
-                    breakdown = state.drinkBreakdown,
-                )
+                // Everything below ignores the period picker: a weekday habit only shows up
+                // across all of history.
+                if (report.weekdays.loggedDays > 0) {
+                    Text(
+                        text = "ALL TIME",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 12.dp, start = 4.dp),
+                    )
+                    WeekdayPatternCard(pattern = report.weekdays, goalMl = state.goalMl)
+                }
 
-                Spacer(modifier = Modifier.height(8.dp))
-                Spacer(modifier = Modifier.height(96.dp))
+                Spacer(modifier = Modifier.height(84.dp))
             }
         }
     }
